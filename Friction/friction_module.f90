@@ -20,9 +20,8 @@ MODULE friction_module
     REAL (KIND=wp), DIMENSION(:), ALLOCATABLE :: vec_i, vec_j
     REAL (KIND=wp), DIMENSION(:), ALLOCATABLE :: corr_result
     REAL (KIND=wp), DIMENSION(:,:), ALLOCATABLE :: final_results
-    REAL (KIND=wp), DIMENSION(3,3) :: Friction
 
-    INTEGER :: a, b, I_sol, t_lag, step
+    INTEGER :: a, I_sol, t_lag, step
     INTEGER(c_int) :: N_c
     REAL (KIND=wp) :: time_val
 
@@ -57,7 +56,7 @@ MODULE friction_module
     END DO
     
     ! We only report the first half (N/2) because the cyclic FFT is symmetric and the correlation decays
-    DO step = 1, n_steps / 2
+    DO step = 1, n_steps / 4
       t_lag = step - 1
       time_val = t_lag * dt
 

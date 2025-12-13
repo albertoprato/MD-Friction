@@ -7,7 +7,7 @@ MODULE fft_correlation_module
 
 CONTAINS
 
-  subroutine compute_correlation_fft(N, x, y, correlation)
+  SUBROUTINE compute_correlation_fft(N, x, y, correlation)
 
     !==============================================
     ! Calculate the cross-correlation throught FFT
