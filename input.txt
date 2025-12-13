@@ -1,0 +1,10 @@
+5000 80.0                               ! nk, dt (20 a.u. ~ 0.5 fs)
+32840.0 16420.0 0.000109 6.683          ! Solvent: m, mu_B, omega, d0
+13136.0 0.000096 7.105                  ! Solute: mu_int, Omega, D0
+ 2.36  2.84  0.0                        ! C1 (Butene Trans)
+ 0.00  1.27  0.0                        ! C2
+ 0.00 -1.27  0.0                        ! C3
+-2.36 -2.84  0.0                        ! C4
+2                                       ! Number of Solvent particles (N)
+1.0  1.0  1.0  0.0  0.0  0.0            ! Solvent 1: x, y, z, vx, vy, vz
+2.0  2.0  2.0  0.0  0.0  0.0
