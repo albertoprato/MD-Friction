@@ -9,7 +9,7 @@ MODULE friction_module
   ! Friction Tensor
   !================
 
-  subroutine friction_tensor(n_steps, force_hist, dt)
+  SUBROUTINE friction_tensor(n_steps, force_hist, dt)
 
     INTEGER, INTENT(IN) :: n_steps
     REAL (KIND=wp), DIMENSION(4, 3, n_steps), INTENT(IN) :: force_hist
@@ -21,7 +21,7 @@ MODULE friction_module
     REAL (KIND=wp), DIMENSION(:), ALLOCATABLE :: corr_result
     REAL (KIND=wp), DIMENSION(:,:), ALLOCATABLE :: final_results
 
-    INTEGER :: a, I_sol, t_lag, step
+    INTEGER :: a, I_sol, J_sol, t_lag, step
     INTEGER(c_int) :: N_c
     REAL (KIND=wp) :: time_val
 
@@ -38,6 +38,7 @@ MODULE friction_module
     PRINT *, "Calculating Friction Tensor throught FFTW3..."
     
     I_sol = 1
+    J_sol = 1
     
     ! Create an array to store the diagonal components      
     ALLOCATE(final_results(n_steps, 3))
@@ -55,8 +56,8 @@ MODULE friction_module
     
     END DO
     
-    ! We only report the first half (N/2) because the cyclic FFT is symmetric and the correlation decays
-    DO step = 1, n_steps / 4
+    ! We only report the first half (N/2) because the FFT is symmetric and the correlation decays
+    DO step = 1, n_steps / 2
       t_lag = step - 1
       time_val = t_lag * dt
 

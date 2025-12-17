@@ -32,7 +32,7 @@ CONTAINS
     ALLOCATE(signal_y(N), fft_y(N))
     ALLOCATE(power_spectrum(N), result_complex(N))
     
-    ! Subtraction of the mean (important for fluctuations)
+    ! Subtraction of the mean to obtain fluctuations
     mean_x = SUM(x) / DBLE(N)
     mean_y = SUM(y) / DBLE(N)
 

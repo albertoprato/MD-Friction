@@ -5,7 +5,7 @@ MODULE force_module
   CONTAINS                                                           
                                                                       
     SUBROUTINE force_calculation(n_solv, pos_solv, pos_solute, forces_solv, forces_solute, &
-                                 mu_B, omega, d0, mu_int, Omega_big, D0_big, epot)
+                                 mu_B, omega, d0, mu_int, Omega_big, D0_big, r_cut, epot)
 
       ! Inputs
 
@@ -15,6 +15,7 @@ MODULE force_module
       
       REAL (KIND=wp), INTENT(IN) :: mu_B, omega, d0
       REAL (KIND=wp), INTENT(IN) :: mu_int, Omega_big, D0_big
+      REAL (KIND=wp), INTENT(IN) :: r_cut
       
       ! Outputs
 
@@ -55,9 +56,9 @@ MODULE force_module
             dist_sq = dist_sq + diff(dim)**2
           END DO
 
-          dist = sqrt(dist_sq)
+          dist = SQRT(dist_sq)
 
-          IF (dist > 1.0e-10_wp) THEN ! Avoid division by zero
+          IF (dist > 1.0e-10_wp .AND. dist < r_cut) THEN ! Avoid division by zero
 
             epot = epot + mu_B * (omega**2) * ((dist - d0)**2)
       
@@ -90,9 +91,9 @@ MODULE force_module
             dist_sq = dist_sq + diff(dim)**2
           END DO
 
-          dist = sqrt(dist_sq)
+          dist = SQRT(dist_sq)
 
-          IF (dist > 1.0e-10_wp) THEN ! Avoid division by zero
+          IF (dist > 1.0e-10_wp .AND. dist < r_cut) THEN ! Avoid division by zero
 
             epot = epot + mu_int * (Omega_big**2) * ((dist - D0_big)**2)
 
