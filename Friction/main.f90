@@ -10,9 +10,8 @@ PROGRAM main
   INTEGER :: nk, n_solv, i, step, n_total_atoms, atom_idx
   REAL (KIND=wp) :: dt
   REAL (KIND=wp) :: mass_solv
-  REAL (KIND=wp) :: mu_B, omega, d0
-  REAL (KIND=wp) :: mu_int, Omega_big, D0_big
-  REAL (KIND=wp) :: r_cut
+  REAL (KIND=wp) :: epsilon_ss, sigma_ss
+  REAL (KIND=wp) :: epsilon_int, sigma_int
 
   ! Array
 
@@ -30,10 +29,20 @@ PROGRAM main
   OPEN(UNIT=10, FILE='input.txt', STATUS='old')
   
   READ(10, *) nk, dt
-  READ(10, *) mass_solv, mu_B, omega, d0, r_cut
-  READ(10, *) mu_int, Omega_big, D0_big
+  READ(10, *) mass_solv, epsilon_ss, sigma_ss
+  READ(10, *) epsilon_int, sigma_int
  
   CLOSE(10)
+  
+
+  PRINT *, "=========================================="
+  PRINT *, "Molecular Dynamics with Lennard-Jones"
+  PRINT *, "=========================================="
+  PRINT *, "Time steps:", nk, "  dt =", dt
+  PRINT *, "Solvent mass:", mass_solv
+  PRINT *, "LJ (solvent-solvent): epsilon =", epsilon_ss, " sigma =", sigma_ss
+  PRINT *, "LJ (solute-solvent):  epsilon =", epsilon_int, " sigma =", sigma_int  
+  PRINT *, ""
 
   OPEN(UNIT=11, FILE='system.xyz', STATUS='old')
 
@@ -71,8 +80,8 @@ PROGRAM main
   vel_solv = 0.0_wp
 
   ! Calculate the forces at t = 0
-  CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, mu_B, omega, d0, &
-                         mu_int, Omega_big, D0_big, r_cut, e_pot) 
+  CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
+                         epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot) 
 
   ! Output Files
   OPEN(UNIT=20, FILE='trajectory.xyz', STATUS='replace')
@@ -99,9 +108,9 @@ PROGRAM main
     traj_history(:, :, step) = pos_solv
 
     ! Calculate new forces 
-    CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, mu_B, omega, d0, &
-                           mu_int, Omega_big, D0_big, r_cut, e_pot)
-   
+    CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
+                           epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot)
+ 
     ! Save Forces
     force_history(:, :, step) = force_solute
 
@@ -133,12 +142,18 @@ PROGRAM main
   CLOSE(20)
   CLOSE(21)
   
+  PRINT *, ""
   PRINT *, "Simulation Completed."
-
+  PRINT *, "Trajectory saved to: trajectory.xyz"
+  PRINT *, ""
+  PRINT *, "Computing friction tensor..."
 
   ! Calculate Friction Tensor
   CALL friction_tensor(nk, force_history, dt)
 
   DEALLOCATE(pos_solv, vel_solv, force, traj_history, force_history)
+
+  PRINT *, ""
+  PRINT *, "Program terminated successfully."
 
 END PROGRAM main

@@ -26,7 +26,7 @@ MODULE force_module
       INTEGER :: i, k, dim, I_solute  
       REAL (KIND=wp) :: dist_sq, dist, r_inv, r2_inv, r6_inv, r12_inv
       REAL (KIND=wp) :: diff(3)
-      REAL (KIND=wp) :: force_magnitude, sigma6, sigma12
+      REAL (KIND=wp) :: sigma6, sigma12
       REAL (KIND=wp) :: e_lj, f_lj_factor
       
       forces_solv = 0.0_wp
@@ -87,7 +87,7 @@ MODULE force_module
             dist_sq = dist_sq + diff(dim)**2
           END DO
           
-          IF (dist_sq < r_cut**2 .AND. dist_sq > 1.0e-10_wp) THEN
+          IF (dist_sq > 1.0e-10_wp) THEN
             dist = SQRT(dist_sq)
             r_inv = 1.0_wp / dist
             r2_inv = 1.0_wp / dist_sq
