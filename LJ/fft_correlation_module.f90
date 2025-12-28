@@ -18,29 +18,38 @@ CONTAINS
     REAL(KIND=wp), INTENT(IN) :: x(N), y(N)
     REAL(KIND=wp), INTENT(OUT) :: correlation(N)
 
-    COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: signal_x(:), signal_y(:)
-    COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: fft_x(:), fft_y(:)
-    COMPLEX(C_DOUBLE_COMPLEX), ALLOCATABLE :: power_spectrum(:), result_complex(:) 
+    INTEGER(C_INT) :: N_pad
+
+    COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), ALLOCATABLE :: signal_x, signal_y
+    COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), ALLOCATABLE :: fft_x, fft_y
+    COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), ALLOCATABLE :: power_spectrum, result_complex
     
     TYPE(C_PTR) :: plan_fwd_x, plan_fwd_y, plan_bwd
 
     REAL(KIND=wp) :: mean_x, mean_y, norm
     INTEGER :: i
 
+    N_pad = 2 * N
+
     ! Allocation
-    ALLOCATE(signal_x(N), fft_x(N))
-    ALLOCATE(signal_y(N), fft_y(N))
-    ALLOCATE(power_spectrum(N), result_complex(N))
-    
+    ALLOCATE(signal_x(N_pad), fft_x(N_pad))
+    ALLOCATE(signal_y(N_pad), fft_y(N_pad))
+    ALLOCATE(power_spectrum(N_pad), result_complex(N_pad))
+ 
     ! Subtraction of the mean to obtain fluctuations
     mean_x = SUM(x) / DBLE(N)
     mean_y = SUM(y) / DBLE(N)
+
+    ! Initialization
+    signal_x = CMPLX(0.0_wp, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
+    signal_y = CMPLX(0.0_wp, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
 
     ! Copy real values into complex vector
     DO i = 1, N
       signal_x(i) = CMPLX(x(i)- mean_x, 0.0_wp, KIND=C_DOUBLE_COMPLEX) 
       signal_y(i) = CMPLX(y(i)- mean_y, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
     END DO
+    ! From N+1 to N_pad there are zeros
 
     ! Creation Plans FFTW
     plan_fwd_x = fftw_plan_dft_1d(N, signal_x, fft_x, FFTW_FORWARD, FFTW_ESTIMATE)
@@ -52,7 +61,7 @@ CONTAINS
     CALL fftw_execute_dft(plan_fwd_y, signal_y, fft_y)
 
     ! Calculate conj(F(f)) * F(g)
-    DO i = 1, N
+    DO i = 1, N_pad
         power_spectrum(i) = CONJG(fft_x(i)) * fft_y(i)
     END DO
 

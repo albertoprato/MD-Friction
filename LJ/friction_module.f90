@@ -35,8 +35,6 @@ MODULE friction_module
     OPEN(UNIT=30, FILE='friction_tensor.dat', status='replace')
     WRITE(30, '(A)') "#    Time  |      Friction_XX Friction_YY Friction_ZZ"
           
-    PRINT *, "Calculating Friction Tensor throught FFTW3..."
-    
     I_sol = 1
     J_sol = 1
     
@@ -68,8 +66,6 @@ MODULE friction_module
     CLOSE(30)
 
     DEALLOCATE(vec_i, vec_j, corr_result, final_results)
-
-    PRINT *, "Friction calculation completed. Results in friction_tensor.dat"
 
   END SUBROUTINE friction_tensor
 

@@ -1,50 +1,59 @@
-# Nome dell'eseguibile
+# Executable name
 EXEC = simulation
 
-# Compilatore
+# Compiler
 FC = gfortran
 
-# Flag di compilazione
-# -I. serve per cercare i file .mod nella cartella corrente
-# -g -fbacktrace sono utili per il debug se il codice crasha
-FFLAGS = -O2 -Wall -I. -I/usr/local/include 
+# Compilation flags
+# -I. is needed to search for .mod files in the current directory
+# -g -fbacktrace are useful for debugging if the code crashes
+FFLAGS = -O2 -Wall -I. -I/usr/local/include
 
+# Linker flags (FFTW3 library and Math library)
 LDFLAGS = -lfftw3 -lm
 
-# File sorgenti
+# Source files
+# Added minimization_module.f90 and velocity_init_module.f90
 SRC = kinds.f90 \
-      fft_correlation_module.f90 \
       force_module.f90 \
+      fft_correlation_module.f90 \
       friction_module.f90 \
       main.f90
 
-# File oggetto (sostituisce .f90 con .o)
+# Object files (replaces .f90 with .o)
 OBJ = $(SRC:.f90=.o)
 
-# Regola principale
+# Main rule
 all: $(EXEC)
 
-# Link finale (Creazione eseguibile)
+# Final Link (Create executable)
 $(EXEC): $(OBJ)
 	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Compilazione generica dei file oggetto
+# Generic compilation of object files
 %.o: %.f90
 	$(FC) $(FFLAGS) -c $<
 
-# Definiscono l'ordine di compilazione corretto per i moduli Fortran.
+# ==========================================
+# Module Dependencies definition
+# ==========================================
 
+# Base module
 kinds.o: kinds.f90
 
-fft_correlation_module.o: fft_correlation_module.f90 kinds.o
-
+# Force module (depends on kinds)
 force_module.o: force_module.f90 kinds.o
 
+# FFT module (depends on kinds)
+fft_correlation_module.o: fft_correlation_module.f90 kinds.o
+
+# Friction module (depends on kinds and FFT module)
 friction_module.o: friction_module.f90 fft_correlation_module.o kinds.o
 
+# Main program (depends on ALL modules)
 main.o: main.f90 force_module.o friction_module.o kinds.o
 
-# Pulizia
+# Cleaning rule
 clean:
 	rm -f *.o *.mod $(EXEC)
 

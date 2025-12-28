@@ -38,12 +38,17 @@ PROGRAM main
   PRINT *, "=========================================="
   PRINT *, "Molecular Dynamics with Lennard-Jones"
   PRINT *, "=========================================="
-  PRINT *, "Time steps:", nk, "  dt =", dt
-  PRINT *, "Solvent mass:", mass_solv
-  PRINT *, "LJ (solvent-solvent): epsilon =", epsilon_ss, " sigma =", sigma_ss
-  PRINT *, "LJ (solute-solvent):  epsilon =", epsilon_int, " sigma =", sigma_int  
   PRINT *, ""
-
+  PRINT '(A, I6, A, E12.5)', "Time steps: ", nk, "  dt =", dt
+  PRINT '(A, G12.5)', "Solvent mass: ", mass_solv
+  PRINT '(A, /, A, G12.5, 3X, A, G12.5)', &
+        "LJ (solvent-solvent):", &
+        "epsilon = ", epsilon_ss, "sigma = ", sigma_ss
+  PRINT '(A, /, A, G12.5, 3X, A, G12.5)', &
+        "LJ (solute-solvent):", &
+        "epsilon = ", epsilon_int, "sigma = ", sigma_int
+  PRINT *, ""
+  
   OPEN(UNIT=11, FILE='system.xyz', STATUS='old')
 
   READ(11, *) n_total_atoms
@@ -52,6 +57,7 @@ PROGRAM main
   n_solv = n_total_atoms - 4
 
   PRINT *, "System initialized with", n_solv, "solvent particles and", 4, "solute particles"
+  PRINT *, ""
  
   ALLOCATE(pos_solv(n_solv, 3), vel_solv(n_solv, 3), force(n_solv, 3))
   ALLOCATE(traj_history(n_solv, 3, nk))
@@ -118,7 +124,7 @@ PROGRAM main
     vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
   
     ! Output Results (e.g. every 100 steps)
-    IF (MOD(step, 10000) == 0) THEN
+    IF (MOD(step, 100) == 0) THEN
       
       ! Trajectory
       WRITE(20, *) n_solv + 4
@@ -142,9 +148,7 @@ PROGRAM main
   CLOSE(20)
   CLOSE(21)
   
-  PRINT *, ""
-  PRINT *, "Simulation Completed."
-  PRINT *, "Trajectory saved to: trajectory.xyz"
+  PRINT *, "Simulation Completed. Trajectory saved to: trajectory.xyz"
   PRINT *, ""
   PRINT *, "Computing friction tensor..."
 
@@ -153,6 +157,7 @@ PROGRAM main
 
   DEALLOCATE(pos_solv, vel_solv, force, traj_history, force_history)
 
+  PRINT *, "Friction calculation completed. Results in friction_tensor.dat"
   PRINT *, ""
   PRINT *, "Program terminated successfully."
 
