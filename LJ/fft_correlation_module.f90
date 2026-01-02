@@ -1,3 +1,10 @@
+!============================================================
+! FFT Correlation Module
+! Computes time correlation functions using the Fast Fourier
+! Transform (FFTW3 library)
+! If x == y, autocorrelation
+!============================================================
+
 MODULE fft_correlation_module
   USE kinds, ONLY: wp => dp
   USE, INTRINSIC :: iso_c_binding
@@ -9,11 +16,6 @@ CONTAINS
 
   SUBROUTINE compute_correlation_fft(N, x, y, correlation)
 
-    !==============================================
-    ! Calculate the cross-correlation throught FFT
-    ! If x == y, autocorrelation
-    !==============================================
- 
     INTEGER(C_INT), INTENT(IN) :: N
     REAL(KIND=wp), INTENT(IN) :: x(N), y(N)
     REAL(KIND=wp), INTENT(OUT) :: correlation(N)

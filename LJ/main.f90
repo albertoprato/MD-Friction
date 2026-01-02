@@ -1,21 +1,28 @@
+!===============================================================
+! Main Program: Classical Molecular Dynamics
+! Simulates a solute in a solvent using Lennard-Jones potentials.
+! Integrates equations of motion via Velocity Verlet algorithm
+! and computes Friction Tensor
+!===============================================================
+
 PROGRAM main
   USE kinds, ONLY: wp => dp                                           
   USE force_module
   USE friction_module
   USE minimization_module
+  USE velocity_init_module
                                                         
   IMPLICIT NONE
 
-  ! Input Variables
-  
+  ! Input Variables  
   INTEGER :: nk, n_solv, i, step, n_total_atoms, atom_idx
   REAL (KIND=wp) :: dt
   REAL (KIND=wp) :: mass_solv
   REAL (KIND=wp) :: epsilon_ss, sigma_ss
   REAL (KIND=wp) :: epsilon_int, sigma_int
+  REAL(KIND=wp) :: temp, k_boltz
 
   ! Array
-
   REAL (KIND=wp), DIMENSION(:,:), ALLOCATABLE :: pos_solv, vel_solv, force      ! (N, 3)
   REAL (KIND=wp), DIMENSION(:,:,:), ALLOCATABLE :: traj_history                 ! (N, 3, Steps)
   REAL (KIND=wp), DIMENSION(:,:,:), ALLOCATABLE :: force_history                ! (4, 3, Steps)
@@ -24,30 +31,36 @@ PROGRAM main
   REAL(KIND=wp) :: e_pot
   CHARACTER(LEN=2) :: atom_label  
   REAL(KIND=wp) :: inp_x, inp_y, inp_z
+  
+  ! Variables for MSD
+  REAL(KIND=wp), DIMENSION(:,:), ALLOCATABLE :: pos_solv0
+  REAL(KIND=wp) :: msd, dist_sq_diff, time_val
+  INTEGER :: k
 
   ! Read Input
-
   OPEN(UNIT=10, FILE='input.txt', STATUS='old')
   
   READ(10, *) nk, dt
   READ(10, *) mass_solv, epsilon_ss, sigma_ss
   READ(10, *) epsilon_int, sigma_int
+  READ(10, *) temp, k_boltz
  
   CLOSE(10)  
-
+  
+  PRINT *, ""
   PRINT *, "=========================================="
   PRINT *, "Molecular Dynamics with Lennard-Jones"
   PRINT *, "=========================================="
   PRINT *, ""
-  PRINT '(A, I6, A, E12.5)', "Time steps: ", nk, "  dt =", dt
-  PRINT '(A, G12.5)', "Solvent mass: ", mass_solv
-  PRINT '(A, /, A, G12.5, 3X, A, G12.5)', &
+  PRINT *, '(A, I6, A, E12.5)', "Time steps: ", nk, "  dt =", dt
+  PRINT *, '(A, G12.5)', "Solvent mass: ", mass_solv
+  PRINT *, '(A, /, A, G12.5, 3X, A, G12.5)', &
         "LJ (solvent-solvent):", &
         "epsilon = ", epsilon_ss, "sigma = ", sigma_ss
-  PRINT '(A, /, A, G12.5, 3X, A, G12.5)', &
+  PRINT *, '(A, /, A, G12.5, 3X, A, G12.5)', &
         "LJ (solute-solvent):", &
         "epsilon = ", epsilon_int, "sigma = ", sigma_int
-  PRINT *, ""
+  PRINT *, '(A, F10.2, A)', " Simulation Temperature: ", temp, " K"
   
   OPEN(UNIT=11, FILE='system.xyz', STATUS='old')
 
@@ -89,7 +102,69 @@ PROGRAM main
   
   PRINT *, "Optimization Completed."
   PRINT *, ""  
+ 
+  PRINT *, "Initializing Velocities..."
+
+  CALL init_velocities(n_solv, vel_solv, mass_solv, temp, k_boltz)
+
+  PRINT *, "Velocities assigned and scaled. Drift removed."
+  PRINT *, ""  
   
+  PRINT *, "Starting Equilibration (5000 steps)..."
+  
+  ! Allocation of array for initial positions 
+  ALLOCATE(pos_solv0(n_solv, 3))
+
+  ! "Crystalline" positions at t = 0
+  pos_solv0 = pos_solv
+
+  OPEN(UNIT=40, FILE='equilibration_stats.dat', STATUS='replace')
+  WRITE(40, '(A)') "# Time(ps)       E_pot(LJ)        MSD(A^2)"
+ 
+  ! Calculation of the initial forces post-optimization
+  CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
+                         epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot)
+
+  DO step = 1, 5000
+    time_val = DBLE(step) * dt   
+    
+    ! Half-kick
+    vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
+     
+    ! Drift
+    pos_solv = pos_solv + dt * vel_solv
+    
+    ! New Forces
+    CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
+                            epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot)
+                            
+    ! Half-kick
+    vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
+    
+    ! Calculation of Mean Squared Displacement
+    msd = 0.0_wp
+    DO i = 1, n_solv
+      dist_sq_diff = 0.0_wp
+      DO k = 1, 3
+        dist_sq_diff = dist_sq_diff + (pos_solv(i, k) - pos_solv0(i, k))**2
+      END DO
+      msd = msd + dist_sq_diff
+    END DO
+    msd = msd / DBLE(n_solv)
+
+    ! Salviamo ogni 10 step per non creare file enormi
+    IF (MOD(step, 10) == 0) THEN
+      WRITE(40, '(F12.4, 2X, ES14.6, 2X, ES14.6)') time_val, e_pot, msd
+    END IF
+    
+  END DO
+  
+  CLOSE(40)
+  DEALLOCATE(pos_solv0)
+ 
+  PRINT *, "Equilibration completed. Stats saved in equilibration_stats.dat"
+  PRINT *, ""
+
   PRINT *, "Starting Molecular Dynamics..."
 
   vel_solv = 0.0_wp

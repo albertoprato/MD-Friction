@@ -9,10 +9,11 @@ MODULE minimization_module
   ! Conjugate Gradient Minimization Routine (Polak-Ribiere)
   ! Performs energy minimization to relax the solvent structure
   !============================================================
+
   SUBROUTINE conjugate_gradient_minimize(n_solv, pos_solv, pos_solute, &
                                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, &
                                          tol, max_iter)
-    
+  
     ! Inputs
     INTEGER, INTENT(IN) :: n_solv, max_iter
     REAL(KIND=wp), DIMENSION(:,:), INTENT(INOUT) :: pos_solv
@@ -33,7 +34,7 @@ MODULE minimization_module
     CALL force_calculation(n_solv, pos_solv, pos_solute, forces_solv, forces_solute_dummy, &
                            epsilon_ss, sigma_ss, epsilon_int, sigma_int, epot)
     
-    ! The gradient is g = - Forces
+    ! Initial gradient
     g = -forces_solv
     
     ! Initial descent direction (Steepest Descent)
@@ -45,55 +46,53 @@ MODULE minimization_module
     iter = 0
     converged = .FALSE.
 
-    ! Main Optimization Loop
+    ! Optimization Loop
     DO WHILE (iter < max_iter .AND. .NOT. converged)
-       iter = iter + 1
+      iter = iter + 1
 
-       ! Check convergence on the gradient norm
-       IF (SQRT(g_dot_g) < tol) THEN
-          converged = .TRUE.
-          EXIT
-       END IF
+      ! Check convergence on the gradient norm
+      IF (SQRT(g_dot_g) < tol) THEN
+         converged = .TRUE.
+         EXIT
+      END IF
 
-       ! Line Search (Backtracking) to find step size alpha
-       ! We verify that E(pos + alpha*d) < E(pos)
-       alpha = 1.0e-4_wp ! Small initial step to ensure stability
-       pos_new = pos_solv + alpha * d
+      ! Line Search to find step size alpha 
+      ! We verify that E(pos + alpha*d) < E(pos)  
+      alpha = 1.0e-4_wp ! Small initial step to ensure stability
+      pos_new = pos_solv + alpha * d
        
-       CALL force_calculation(n_solv, pos_new, pos_solute, forces_solv, forces_solute_dummy, &
+      CALL force_calculation(n_solv, pos_new, pos_solute, forces_solv, forces_solute_dummy, &
                               epsilon_ss, sigma_ss, epsilon_int, sigma_int, epot_new)
        
-       ! Backtracking: decrease alpha if energy increases
-       DO k = 1, 10
-          IF (epot_new < epot) EXIT
-          alpha = alpha * 0.5_wp
-          pos_new = pos_solv + alpha * d
-          CALL force_calculation(n_solv, pos_new, pos_solute, forces_solv, forces_solute_dummy, &
-                                 epsilon_ss, sigma_ss, epsilon_int, sigma_int, epot_new)
-       END DO
+      ! Backtracking: decrease alpha if energy increases
+      DO k = 1, 10
+        IF (epot_new < epot) EXIT
+        alpha = alpha * 0.5_wp
+        pos_new = pos_solv + alpha * d
+        CALL force_calculation(n_solv, pos_new, pos_solute, forces_solv, forces_solute_dummy, &
+                               epsilon_ss, sigma_ss, epsilon_int, sigma_int, epot_new)
+      END DO
 
-       ! Update positions and energy
-       pos_solv = pos_new
-       epot = epot_new
-       g_old = g
-       gamma_old = gamma
+      ! Update positions and energy
+      pos_solv = pos_new
+      epot = epot_new
+      g_old = g              ! Save the old gradient 
+      gamma_old = gamma      ! Save the old dot product
 
-       ! Calculate new gradient: g = - Forces
-       ! Note: forces_solv contains the forces at the new position (calculated in line search)
-       g = -forces_solv 
-       g_dot_g = SUM(g * g)
-       gamma = g_dot_g
+      ! Calculate new gradient
+      g = -forces_solv 
+      g_dot_g = SUM(g * g)
+      gamma = g_dot_g
 
-       ! Calculate Beta using Polak-Ribiere formula
-       ! beta = (g_new . (g_new - g_old)) / (g_old . g_old)
-       g_diff_dot_g = SUM(g * (g - g_old))
-       beta = g_diff_dot_g / gamma_old
+      ! Polak-Ribiere formula
+      g_diff_dot_g = SUM(g * (g - g_old))
+      beta = g_diff_dot_g / gamma_old
        
-       ! Reset to Steepest Descent if beta < 0 (automatic restart)
-       IF (beta < 0.0_wp) beta = 0.0_wp
+      ! Reset to Steepest Descent if beta < 0
+      IF (beta < 0.0_wp) beta = 0.0_wp
 
-       ! Compute new conjugate direction
-       d = -g + beta * d
+      ! Compute new conjugate direction
+      d = -g + beta * d
 
     END DO
 

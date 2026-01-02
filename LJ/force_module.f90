@@ -1,3 +1,10 @@
+!=========================================================
+! Force Calculation Module
+! Computes interaction forces and potential energy between
+! solvent-solvent and solute-solvent particles using 
+! Lennard-Jones potentials.
+!=========================================================
+
 MODULE force_module                                                       
   USE kinds, ONLY: wp => dp                                           
   IMPLICIT NONE                                                                                                  

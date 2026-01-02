@@ -1,13 +1,16 @@
+!=====================================================
+! Friction Tensor Module
+! Calculates the friction tensor by computing the time
+! autocorrelation function of the forces acting on the 
+! solute particles via the FFT method.
+!=====================================================
+
 MODULE friction_module
   USE kinds, ONLY: wp => dp
   USE fft_correlation_module
   IMPLICIT NONE
 
   CONTAINS
-
-  !================
-  ! Friction Tensor
-  !================
 
   SUBROUTINE friction_tensor(n_steps, force_hist, dt)
 
