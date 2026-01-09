@@ -5,7 +5,7 @@
 1.  [Important Information](#1-important-information)
 2.  [Features](#2-features)
 3.  [Prerequisites](#3-prerequisites)
-4.  [Program guide](#5-program-guide)
+4.  [Program guide](#4-program-guide)
 
 ---
 
