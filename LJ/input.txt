@@ -1,5 +1,5 @@
 50000 0.001                                ! nk, dt (ps)
 18.015 63.597 3.1507                       ! Solvent: m (Dalton), epsilon_O, sigma_O
 43.472 3.338                               ! Solute: epsilon_CO, sigma_CO
-300.0 0.831                                ! Temp (K), Boltzmann const
+298.15 0.831                               ! Temp (K), Boltzmann const
 20.0                                       ! L_box used in packmol

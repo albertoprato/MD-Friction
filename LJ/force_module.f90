@@ -12,7 +12,7 @@ MODULE force_module
   CONTAINS                                                           
                                                                       
     SUBROUTINE force_calculation(n_solv, pos_solv, pos_solute, forces_solv, forces_solute, &
-                                 epsilon_ss, sigma_ss, epsilon_int, sigma_int, epot)
+                                 epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, epot)
       ! Inputs
       INTEGER, INTENT(IN) :: n_solv
       REAL (KIND=wp), DIMENSION(:,:), INTENT(IN) :: pos_solv ! (N,3)
@@ -23,6 +23,7 @@ MODULE force_module
       REAL (KIND=wp), INTENT(IN) :: sigma_ss     ! sigma solvent-solvent
       REAL (KIND=wp), INTENT(IN) :: epsilon_int  ! epsilon solute-solvent
       REAL (KIND=wp), INTENT(IN) :: sigma_int    ! sigma solute-solvent
+      REAL (KIND=wp), INTENT(IN) :: box_L        ! Cubic Box Length
       
       ! Outputs
       REAL (KIND=wp), DIMENSION(:,:), INTENT(OUT) ::  forces_solv    ! (N,3)
@@ -35,11 +36,24 @@ MODULE force_module
       REAL (KIND=wp) :: diff(3)
       REAL (KIND=wp) :: sigma6, sigma12
       REAL (KIND=wp) :: e_lj, f_lj_factor
-      
+      REAL (KIND=wp) :: inv_box, r_cut_sq, half_box 
+      REAL(KIND=wp), PARAMETER :: r_cut = 12.0_wp   ! Cutoff
+
       forces_solv = 0.0_wp
       forces_solute = 0.0_wp
       epot = 0.0_wp
       
+      inv_box = 1.0_wp / box_L
+      half_box = box_L * 0.5_wp
+      
+      ! We use the physical cutoff unless the box is too small.
+      ! In that case, we use L/2
+      IF (half_box < r_cut) THEN
+        r_cut_sq = half_box**2
+      ELSE
+        r_cut_sq = r_cut**2
+      END IF
+ 
       ! ===========================     
       ! Solvent-Solvent Interaction
       ! ===========================
@@ -54,10 +68,13 @@ MODULE force_module
           DO dim = 1, 3
             diff(dim) = pos_solv(i, dim) - pos_solv(k, dim)
             
+            ! Minimum Image Convention
+            diff(dim) = diff(dim) - box_L * ANINT(diff(dim) * inv_box)
+            
             dist_sq = dist_sq + diff(dim)**2
           END DO
           
-          IF (dist_sq > 1.0e-10_wp) THEN
+          IF (dist_sq > 1.0e-10_wp .AND. dist_sq < r_cut_sq) THEN
             
             r_inv = 1.0_wp / dist
             r2_inv = 1.0_wp / dist_sq
@@ -95,10 +112,12 @@ MODULE force_module
           DO dim = 1, 3
             diff(dim) = pos_solv(i, dim) - pos_solute(I_solute, dim)
             
+            diff(dim) = diff(dim) - box_L * ANINT(diff(dim) * inv_box)
+
             dist_sq = dist_sq + diff(dim)**2
           END DO
           
-          IF (dist_sq > 1.0e-10_wp) THEN
+          IF (dist_sq > 1.0e-10_wp .AND. dist_sq < r_cut_sq) THEN
             
             r_inv = 1.0_wp / dist
             r2_inv = 1.0_wp / dist_sq

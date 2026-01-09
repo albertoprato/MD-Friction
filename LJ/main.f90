@@ -31,6 +31,8 @@ PROGRAM main
   REAL(KIND=wp) :: e_pot
   CHARACTER(LEN=2) :: atom_label  
   REAL(KIND=wp) :: inp_x, inp_y, inp_z
+  
+  REAL(KIND=wp) :: box_L, inv_box
 
   ! Variables for MSD
   REAL(KIND=wp), DIMENSION(:,:), ALLOCATABLE :: pos_solv0
@@ -44,7 +46,9 @@ PROGRAM main
   READ(10, *) mass_solv, epsilon_ss, sigma_ss
   READ(10, *) epsilon_int, sigma_int
   READ(10, *) temp, k_boltz
- 
+  READ(10, *) box_L
+  inv_box = 1.0_wp / box_L
+  
   CLOSE(10)  
   
   PRINT *, ""
@@ -102,7 +106,7 @@ PROGRAM main
   
   CALL conjugate_gradient_minimize(n_solv, pos_solv, pos_solute, &
                                    epsilon_ss, sigma_ss, epsilon_int, sigma_int, &
-                                   1.0d-3, 2000)
+                                   box_L, 1.0d-3, 2000)
   
   PRINT *, "Optimization Completed."
   PRINT *, ""  
@@ -127,9 +131,9 @@ PROGRAM main
  
   ! Calculation of the initial forces post-optimization
   CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
-                         epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot)
+                         epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
 
-  DO step = 1, 5000
+  DO step = 1, 10000
     time_val = DBLE(step) * dt   
     
     ! Half-kick
@@ -140,7 +144,7 @@ PROGRAM main
     
     ! New Forces
     CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
-                            epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot)
+                            epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
                             
     ! Half-kick
     vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
@@ -174,7 +178,7 @@ PROGRAM main
 
   ! Calculate the forces at t = 0
   CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
-                         epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot) 
+                         epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot) 
 
   ! Output Files
   OPEN(UNIT=20, FILE='trajectory.xyz', STATUS='replace')
@@ -196,12 +200,18 @@ PROGRAM main
     ! Drift
     pos_solv = pos_solv + dt * vel_solv
 
+    DO i = 1, n_solv
+      pos_solv(i, 1) = pos_solv(i, 1) - box_L * ANINT(pos_solv(i, 1) * inv_box)
+      pos_solv(i, 2) = pos_solv(i, 2) - box_L * ANINT(pos_solv(i, 2) * inv_box)
+      pos_solv(i, 3) = pos_solv(i, 3) - box_L * ANINT(pos_solv(i, 3) * inv_box)
+    END DO
+
     ! Save Trajectory
     traj_history(:, :, step) = pos_solv
 
     ! Calculate new forces 
     CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
-                           epsilon_ss, sigma_ss, epsilon_int, sigma_int, e_pot)
+                           epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
  
     ! Save Forces
     force_history(:, :, step) = force_solute
