@@ -15,6 +15,8 @@ This Fortran program simulates the classical molecular dynamics of a solute cons
 
 The goal of this software is to compute the **friction tensor** of the solute as a function of time by analyzing the time-autocorrelation function of the forces experienced by the solute particles.
 
+---
+
 ### 2. Features
 
 * **Force Field**: Lennard-Jones potential with cutoff and Minimum Image Convention.
@@ -25,6 +27,8 @@ The goal of this software is to compute the **friction tensor** of the solute as
 * **Initialization**: Maxwell velocity distribution
 * **Analysis**: Computation of the friction tensor via Fast Fourier Transforms (FFTW3).
 
+---
+
 ### 3. Prerequisites
 
 To compile and run this simulation, you need:
@@ -32,6 +36,8 @@ To compile and run this simulation, you need:
 1.  **Make**: GNU Make build tool.
 2.  **GFortran**: The GNU Fortran compiler.
 3.  **FFTW3**: The "Fastest Fourier Transform in the West" library.
+
+---
 
 ### 4. Program guide
 
