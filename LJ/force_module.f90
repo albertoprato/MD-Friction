@@ -9,9 +9,9 @@
 !  INPUTS:
 !   - n_solv: Number of solvent particles.
 !   - pos_solv, pos_solute: Arrays of particle positions.
-!   - epsilon_ss, sigma_ss: LJ parameters for solvent-solvent interactions.
-!   - epsilon_int, sigma_int: LJ parameters for solute-solvent interactions.
-!   - box_L: Length of the simulation box.
+!   - epsilon_ss, sigma_ss: LJ parameters for solvent-solvent interaction.
+!   - epsilon_int, sigma_int: LJ parameters for solute-solvent interaction.
+!   - box_L: Length of the cubic box.
 !
 !  OUTPUTS:
 !   - forces_solv: Forces acting on solvent particles.
@@ -61,18 +61,18 @@ MODULE force_module
       inv_box = 1.0_wp / box_L
       half_box = box_L * 0.5_wp
       
-      ! We use the physical cutoff unless the box is too small.
+      ! We use a cutoff of r_cut unless the box is too small.
       ! In that case, we use L/2
       IF (half_box < r_cut) THEN
         r_cut_sq = half_box**2
       ELSE
         r_cut_sq = r_cut**2
       END IF
- 
-      ! ===========================     
-      ! Solvent-Solvent Interaction
-      ! ===========================
       
+      !----------------------------
+      ! Solvent-Solvent Interaction
+      !----------------------------
+
       sigma6 = sigma_ss**6
       sigma12 = sigma6**2
       
@@ -106,16 +106,16 @@ MODULE force_module
             DO dim = 1, 3
               ! Force on the i-th particle
               forces_solv(i, dim) = forces_solv(i, dim) + f_lj_factor * diff(dim)
-              ! Newton's law
+              ! Newton's 3rd law
               forces_solv(k, dim) = forces_solv(k, dim) - f_lj_factor * diff(dim)
             END DO
           ENDIF
         END DO
       END DO             
       
-      ! ===========================
+      !---------------------------
       ! Solute-Solvent Interaction
-      ! ===========================
+      !---------------------------
       
       sigma6 = sigma_int**6
       sigma12 = sigma6**2

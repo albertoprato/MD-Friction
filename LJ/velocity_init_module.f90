@@ -1,9 +1,20 @@
-!============================================================
-! Velocity Initialization Module
+!===============================================================
+!                VELOCITY INITIALIZATION MODULE
+!
 ! Generates initial velocities for solvent particles according
 ! to the Maxwell-Boltzmann distribution at a target Temperature.
 ! Removes center-of-mass drift.
-!============================================================
+!
+! INPUTS:
+!   - n_solv: Number of solvent particles.
+!   - mass: Mass of a solvent particle.
+!   - temp: Target temperature.
+!   - kb: Boltzmann constant.
+!
+! OUTPUT:
+!   - vel_solv: Array of initialized particle velocities scaled 
+!               to the target temperature.
+!===============================================================
 
 MODULE velocity_init_module
   USE kinds, ONLY: wp => dp
@@ -15,10 +26,12 @@ MODULE velocity_init_module
     
     ! Inputs
     INTEGER, INTENT(IN) :: n_solv
-    REAL(KIND=wp), DIMENSION(:,:), INTENT(OUT) :: vel_solv ! (N, 3)
     REAL(KIND=wp), INTENT(IN) :: mass  ! Solvent mass
-    REAL(KIND=wp), INTENT(IN) :: temp  ! Temperature (K)
+    REAL(KIND=wp), INTENT(IN) :: temp  ! Temperature
     REAL(KIND=wp), INTENT(IN) :: kb    ! Boltzmann Constant
+
+    ! Output
+    REAL(KIND=wp), DIMENSION(:,:), INTENT(OUT) :: vel_solv ! (N, 3)
 
     ! Local Variables
     INTEGER :: i, k

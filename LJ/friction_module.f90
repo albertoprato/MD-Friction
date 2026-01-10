@@ -1,18 +1,18 @@
 !==============================================================================
-!                  FRICTION TENSOR MODULE
+!                           FRICTION TENSOR MODULE
 !
-!  Calculates the friction tensor for the solute particles. It processes the 
-!  history of forces experienced by the solute during the simulation and 
-!  computes their time-autocorrelation functions via FFT method.
+!  Calculates the friction tensor for the solute particles. 
+!  It processes the history of forces experienced by the solute during the 
+!  simulation and computes their time-autocorrelation functions via FFT method.
 !
 !  INPUTS:
 !   - n_steps: Total number of simulation steps.
 !   - force_hist: 3D array containing force history for the 4 solute particles.
 !   - dt: Time step of the simulation.
 !
-!  OUTPUTS:
+!  OUTPUT:
 !   - friction_tensor.dat: File containing the time evolution of the friction
-!     tensor components
+!                          tensor components
 !==============================================================================
 
 MODULE friction_module

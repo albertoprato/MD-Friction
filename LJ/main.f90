@@ -1,9 +1,30 @@
-!===============================================================
-! Main Program: Classical Molecular Dynamics
-! Simulates a solute in a solvent using Lennard-Jones potentials.
-! Integrates equations of motion via Velocity Verlet algorithm
-! and computes Friction Tensor
-!===============================================================
+!========================================================================================================
+!                           PROGRAM: CLASSICAL MOLECULAR DYNAMICS SIMULATION
+!  
+!  This is the main driver of the MD simulation. It handles:
+!
+!   1. Reading the simulation parameters (input.txt) and the initial configuration (system.xyz).
+!
+!   2. Optimization of the initial configuration via Conjugate Gradient method.
+!
+!   3. Initialization of the solvent molecules' velocities, given the simulation temperature.
+!
+!   4. An initial equilibration phase in which the system transitions from a solid crystalline 
+!      structure to a liquide one.
+!
+!   5. Simulation of the system dynamics by time integration using the Verlet algorithm.
+!
+!   6. Storing the history of the forces and computing the friction tensor the friction tensor.
+!
+! INPUTS:
+!   - input.txt: Simulation parameters.
+!   - system.xyz: Initial configuration.
+!
+! OUTPUTS:
+!   - trajectory.xyz: System trajectory file.
+!   - equilibration_stats.dat: Potential energy and Means-Square Displacement during equilibration phase.
+!   - friction_tensor.dat: Computed friction tensor components.
+!========================================================================================================
 
 PROGRAM main
   USE kinds, ONLY: wp => dp                                           
@@ -34,7 +55,7 @@ PROGRAM main
   
   REAL(KIND=wp) :: box_L, inv_box
 
-  ! Variables for MSD
+  ! Variables for mean square displacement during Equilibration
   REAL(KIND=wp), DIMENSION(:,:), ALLOCATABLE :: pos_solv0
   REAL(KIND=wp) :: msd, dist_sq_diff, time_val
   INTEGER :: k
@@ -149,7 +170,7 @@ PROGRAM main
     ! Half-kick
     vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
     
-    ! Calculation of Mean Squared Displacement
+    ! Calculation of MSD
     msd = 0.0_wp
     DO i = 1, n_solv
       dist_sq_diff = 0.0_wp

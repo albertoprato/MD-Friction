@@ -1,3 +1,25 @@
+!===========================================================================
+!                           MINIMIZATION MODULE
+!
+!  Performs energy minimization of the system using the Conjugate Gradient
+!  method (Polak-Ribiere variant). This is used to relax the initial solvent
+!  configuration and remove high-energy overlaps before dynamics begin.
+!
+!  INPUTS:
+!   - n_solv: Number of solvent particles.
+!   - pos_solv: Initial positions of solvent particles.
+!   - pos_solute: Positions of solute particles.
+!   - epsilon_ss, sigma_ss: LJ parameters for solvent-solvent interaction.
+!   - epsilon_int, sigma_int: LJ parameters for solute-solvent interaction.
+!   - box_L: Length of the cubic box.
+!   - tol: Convergence tolerance for the gradient.
+!   - max_iter: Maximum number of minimization steps.
+!
+!  OUTPUT:
+!   - pos_solv: Updated (relaxed) positions of solvent particles.
+!===========================================================================
+
+
 MODULE minimization_module
   USE kinds, ONLY: wp => dp
   USE force_module
@@ -5,22 +27,17 @@ MODULE minimization_module
 
   CONTAINS
 
-  !============================================================
-  ! Conjugate Gradient Minimization Routine (Polak-Ribiere)
-  ! Performs energy minimization to relax the solvent structure
-  !============================================================
-
   SUBROUTINE conjugate_gradient_minimize(n_solv, pos_solv, pos_solute, &
                                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, &
                                          box_L, tol, max_iter)
   
     ! Inputs
     INTEGER, INTENT(IN) :: n_solv, max_iter
-    REAL(KIND=wp), DIMENSION(:,:), INTENT(INOUT) :: pos_solv
-    REAL(KIND=wp), DIMENSION(:,:), INTENT(IN)    :: pos_solute
+    REAL(KIND=wp), DIMENSION(:,:), INTENT(IN) :: pos_solute
     REAL(KIND=wp), INTENT(IN) :: epsilon_ss, sigma_ss, epsilon_int, sigma_int
     REAL(KIND=wp), INTENT(IN) :: box_L
     REAL(KIND=wp), INTENT(IN) :: tol
+    REAL(KIND=wp), DIMENSION(:,:), INTENT(INOUT) :: pos_solv    ! Input and Output
 
     ! Local Variables
     REAL(KIND=wp), DIMENSION(n_solv, 3) :: forces_solv, forces_solute_dummy

@@ -1,9 +1,17 @@
-!============================================================
-! FFT Correlation Module
-! Computes time correlation functions using the Fast Fourier
-! Transform (FFTW3 library)
-! If x == y, autocorrelation
-!============================================================
+!=====================================================================
+!                       FFT CORRELATION MODULE
+!
+! Computes the time correlation function of data series using the Fast 
+! Fourier Transform (via FFTW3 library).
+! If x == y, it computes the autocorrelation.
+!
+! INPUTS:
+!   - N: Number of data points.
+!   - x, y: Input data arrays.
+!
+! OUTPUT:
+!   - correlation: Array containing the computed correlation function.
+!=====================================================================
 
 MODULE fft_correlation_module
   USE kinds, ONLY: wp => dp

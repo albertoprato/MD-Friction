@@ -1,8 +1,9 @@
-!============================================================
-! Kinds Module
+!===========================================================
+!                       KINDS MODULE
+!
 ! Defines numerical precision parameters (single and double)
 ! used throughout the simulation for consistency.
-!============================================================
+!===========================================================
 
 MODULE kinds                                                          
   IMPLICIT NONE                                                       
