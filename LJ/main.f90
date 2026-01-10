@@ -22,7 +22,7 @@
 !
 ! OUTPUTS:
 !   - trajectory.xyz: System trajectory file.
-!   - equilibration_stats.dat: Potential energy and Means-Square Displacement during equilibration phase.
+!   - equilibration_stats.dat: Potential energy and mean-squared displacement during equilibration phase.
 !   - friction_tensor.dat: Computed friction tensor components.
 !========================================================================================================
 
@@ -55,7 +55,7 @@ PROGRAM main
   
   REAL(KIND=wp) :: box_L, inv_box
 
-  ! Variables for mean square displacement during Equilibration
+  ! Variables for mean squared displacement during Equilibration
   REAL(KIND=wp), DIMENSION(:,:), ALLOCATABLE :: pos_solv0
   REAL(KIND=wp) :: msd, dist_sq_diff, time_val
   INTEGER :: k
