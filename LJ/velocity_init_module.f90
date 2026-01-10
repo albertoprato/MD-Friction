@@ -3,7 +3,6 @@
 !
 ! Generates initial velocities for solvent particles according
 ! to the Maxwell-Boltzmann distribution at a target Temperature.
-! Removes center-of-mass drift.
 !
 ! INPUTS:
 !   - n_solv: Number of solvent particles.
