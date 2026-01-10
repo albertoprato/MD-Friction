@@ -1,0 +1,12 @@
+!===========================================================
+!                       KINDS MODULE
+!
+! Defines numerical precision parameters (single and double)
+! used throughout the simulation for consistency.
+!===========================================================
+
+MODULE kinds                                                          
+  IMPLICIT NONE                                                       
+  INTEGER, PARAMETER, PUBLIC :: sp = SELECTED_REAL_KIND (p=6, r=37)   
+  INTEGER, PARAMETER, PUBLIC :: dp = SELECTED_REAL_KIND (p=13, r=300) 
+END MODULE kinds 

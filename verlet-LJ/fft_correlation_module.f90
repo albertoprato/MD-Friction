@@ -1,0 +1,95 @@
+!=====================================================================
+!                       FFT CORRELATION MODULE
+!
+! Computes the time correlation function of data series using the Fast 
+! Fourier Transform (via FFTW3 library).
+! If x == y, it computes the autocorrelation.
+!
+! INPUTS:
+!   - N: Number of data points.
+!   - x, y: Input data arrays.
+!
+! OUTPUT:
+!   - correlation: Array containing the computed correlation function.
+!=====================================================================
+
+MODULE fft_correlation_module
+  USE kinds, ONLY: wp => dp
+  USE, INTRINSIC :: iso_c_binding
+  IMPLICIT  NONE
+  
+  INCLUDE 'fftw3.f03'
+
+CONTAINS
+
+  SUBROUTINE compute_correlation_fft(N, x, y, correlation)
+
+    INTEGER(C_INT), INTENT(IN) :: N
+    REAL(KIND=wp), INTENT(IN) :: x(N), y(N)
+    REAL(KIND=wp), INTENT(OUT) :: correlation(N)
+
+    INTEGER(C_INT) :: N_pad
+
+    COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), ALLOCATABLE :: signal_x, signal_y
+    COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), ALLOCATABLE :: fft_x, fft_y
+    COMPLEX(C_DOUBLE_COMPLEX), DIMENSION(:), ALLOCATABLE :: power_spectrum, result_complex
+    
+    TYPE(C_PTR) :: plan_fwd_x, plan_fwd_y, plan_bwd
+
+    REAL(KIND=wp) :: mean_x, mean_y, norm
+    INTEGER :: i
+
+    N_pad = 2 * N
+
+    ! Allocation
+    ALLOCATE(signal_x(N_pad), fft_x(N_pad))
+    ALLOCATE(signal_y(N_pad), fft_y(N_pad))
+    ALLOCATE(power_spectrum(N_pad), result_complex(N_pad))
+ 
+    ! Subtraction of the mean to obtain fluctuations
+    mean_x = SUM(x) / DBLE(N)
+    mean_y = SUM(y) / DBLE(N)
+
+    ! Initialization
+    signal_x = CMPLX(0.0_wp, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
+    signal_y = CMPLX(0.0_wp, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
+
+    ! Copy real values into complex vector
+    DO i = 1, N
+      signal_x(i) = CMPLX(x(i)- mean_x, 0.0_wp, KIND=C_DOUBLE_COMPLEX) 
+      signal_y(i) = CMPLX(y(i)- mean_y, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
+    END DO
+    ! From N+1 to N_pad there are zeros
+
+    ! Creation Plans FFTW
+    plan_fwd_x = fftw_plan_dft_1d(N, signal_x, fft_x, FFTW_FORWARD, FFTW_ESTIMATE)
+    plan_fwd_y = fftw_plan_dft_1d(N, signal_y, fft_y, FFTW_FORWARD, FFTW_ESTIMATE)
+    plan_bwd   = fftw_plan_dft_1d(N, power_spectrum, result_complex, FFTW_BACKWARD, FFTW_ESTIMATE)
+    
+    ! FFT
+    CALL fftw_execute_dft(plan_fwd_x, signal_x, fft_x)
+    CALL fftw_execute_dft(plan_fwd_y, signal_y, fft_y)
+
+    ! Calculate conj(F(f)) * F(g)
+    DO i = 1, N_pad
+        power_spectrum(i) = CONJG(fft_x(i)) * fft_y(i)
+    END DO
+
+    ! IFFT
+    CALL fftw_execute_dft(plan_bwd, power_spectrum, result_complex)
+
+    norm = 1.0_wp / (DBLE(N) * DBLE(N))
+
+    DO i = 1, N
+       correlation(i) = REAL(result_complex(i), KIND=wp) * norm
+    END DO
+
+    ! Clean
+    CALL fftw_destroy_plan(plan_fwd_x)
+    CALL fftw_destroy_plan(plan_fwd_y)
+    CALL fftw_destroy_plan(plan_bwd)
+    DEALLOCATE(signal_x, fft_x, signal_y, fft_y, power_spectrum, result_complex)
+
+  END SUBROUTINE compute_correlation_fft
+
+END MODULE fft_correlation_module
