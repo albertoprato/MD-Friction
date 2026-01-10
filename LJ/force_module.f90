@@ -1,9 +1,24 @@
-!=========================================================
-! Force Calculation Module
-! Computes interaction forces and potential energy between
-! solvent-solvent and solute-solvent particles using 
-! Lennard-Jones potentials.
-!=========================================================
+!===========================================================================
+!                          FORCE CALCULATION MODULE
+!
+!  Computes the interaction forces between solvent-solvent and solute-solvent
+!  particles and the potetial energy of the system using Lennard-Jones 
+!  potentials. It handles periodic boundary conditions (Minimum Image 
+!  Convention) and applies a cutoff radius.
+!
+!  INPUTS:
+!   - n_solv: Number of solvent particles.
+!   - pos_solv, pos_solute: Arrays of particle positions.
+!   - epsilon_ss, sigma_ss: LJ parameters for solvent-solvent interactions.
+!   - epsilon_int, sigma_int: LJ parameters for solute-solvent interactions.
+!   - box_L: Length of the simulation box.
+!
+!  OUTPUTS:
+!   - forces_solv: Forces acting on solvent particles.
+!   - forces_solute: Forces acting on solute particles.
+!   - epot: Total potential energy of the system.
+!===========================================================================
+
 
 MODULE force_module                                                       
   USE kinds, ONLY: wp => dp                                           
