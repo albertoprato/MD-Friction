@@ -1,5 +1,7 @@
 ## Classical Molecular Dynamics & Friction Tensor Calculation
 
+---
+
 ### Contents
 
 1.  [Important Information](#1-important-information)
@@ -16,6 +18,7 @@ The goal of this software is to compute the **friction tensor** of the solute as
 
 Author:
   * Alberto Prato - alberto.prato@studenti.unipd.it
+
 ---
 
 ### 2. Prerequisites
