@@ -1,6 +1,7 @@
 ## Classical Molecular Dynamics & Friction Tensor Calculation
 
-* Alberto Prato - alberto.prato@studenti.unipd.it
+Author:
+  * Alberto Prato - alberto.prato@studenti.unipd.it
 
 ---
 
