@@ -25,7 +25,7 @@ The goal is to compute the **friction tensor** of the solute as a function of ti
 
 To compile and run this simulation, you need:
 
-1.  **Make**: GNU Make build tool.
+1.  **Make**: The GNU Make build tool.
 2.  **GFortran**: The GNU Fortran compiler.
 3.  **FFTW3**: The "Fastest Fourier Transform in the West" library.
 
