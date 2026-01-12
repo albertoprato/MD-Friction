@@ -4,7 +4,7 @@
 
 ### Contents
 
-1.  [Important Information](#1-important-information)
+1.  [Information](#1-information)
 2.  [Prerequisites](#2-prerequisites)
 3.  [Program guide](#3-program-guide)
 
