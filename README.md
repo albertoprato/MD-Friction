@@ -8,9 +8,9 @@
 ### Contents
 
 1.  [Information](#1-information)
-2. [Repository Structure](#2-repository-structure)
+2.  [Repository Structure](#2-repository-structure)
 3.  [Prerequisites](#3-prerequisites)
-4.  [Program guide](#4-program-guide)
+4.  [Program Guide](#4-program-guide)
 
 ---
 
@@ -29,8 +29,8 @@ For further information regarding the physical context and underlying equations,
 The repository is organized into three main directories:
 
 * `verlet-LJ/`: contains the Fortran source code for the molecular dynamics simulation, including the Makefile for compilation.
-* `python_tool/`: Includes a jupyter notebook designed to visualize the output data.
-* `doc/`: Documentation folder containing:
+* `python_tool/`: includes a jupyter notebook designed to visualize the output data.
+* `doc/`: documentation folder containing:
     * `User_Guide.pdf`: a practical manual explaining how to compile, configure, and run the software.
     * `Scientific_Report.pdf`: a detailed report covering the theoretical chemical-physical background and coding strategies.
 
@@ -40,12 +40,12 @@ The repository is organized into three main directories:
 
 To compile and run this simulation, the following tools and libraries are required: 
 
-1.  **Make**: The GNU Make build tool.
-2.  **GFortran**: The GNU Fortran compiler.
-3.  **FFTW3**: The "Fastest Fourier Transform in the West" library.
+1.  **Make**: the GNU Make build tool.
+2.  **GFortran**: the GNU Fortran compiler.
+3.  **FFTW3**: the "Fastest Fourier Transform in the West" library.
 
 ---
 
-### 4. Program guide
+### 4. Program Guide
 
 To understand how to use this Fortran program, please read the `User_Guide.pdf` manual located in the `doc/` folder.
