@@ -30,9 +30,9 @@ The repository is organized into three main directories:
 
 * `verlet-LJ/`: contains the Fortran source code for the molecular dynamics simulation, including the Makefile for compilation.
 * `python_tool/`: includes a jupyter notebook designed to visualize the output data.
-* `doc/`: documentation folder containing:
-    * `User_Guide.pdf`: a practical manual explaining how to compile, configure, and run the software.
-    * `Scientific_Report.pdf`: a detailed report covering the theoretical chemical-physical background and coding strategies.
+* `doc/`: documentation folder containing
+    * `User_Guide.pdf` - a practical manual explaining how to compile, configure, and run the software.
+    * `Scientific_Report.pdf` - a detailed report covering the theoretical chemical-physical background and coding strategies.
 
 ---
 
