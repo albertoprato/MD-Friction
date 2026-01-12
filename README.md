@@ -19,6 +19,8 @@ This Fortran program simulates the classical molecular dynamics of a solute cons
 
 The goal is to compute the **friction tensor** of the solute as a function of time through the time-autocorrelation function of the forces experienced by the solute particles.
 
+For further information regarding the physical context and the equations governing the program, please read the file -insertname-.pdf located in the doc folder.
+
 ---
 
 ### 2. Prerequisites
