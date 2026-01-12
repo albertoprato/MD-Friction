@@ -10,7 +10,7 @@
 
 ---
 
-### 1. Important information
+### 1. Information
 
 This Fortran program simulates the classical molecular dynamics of a solute consisting of four spheres immersed in a viscous solvent. The simulation uses Lennard-Jones potentials and integrates numerically the equations of motion using the Velocity Verlet algorithm.
 
