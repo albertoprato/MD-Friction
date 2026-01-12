@@ -1,7 +1,7 @@
 ## Classical Molecular Dynamics & Friction Tensor Calculation
 
-Author:
-  * Alberto Prato - alberto.prato@studenti.unipd.it
+**Author**:
+  * Alberto Prato - [alberto.prato@studenti.unipd.it](mailto:alberto.prato@studenti.unipd.it)
 
 ---
 
@@ -15,17 +15,17 @@ Author:
 
 ### 1. Information
 
-This Fortran program simulates the classical molecular dynamics of a solute consisting of four spheres immersed in a viscous solvent. The simulation uses Lennard-Jones potentials and integrates numerically the equations of motion using the Velocity Verlet algorithm.
+This Fortran program simulates the classical molecular dynamics of a solute consisting of four spheres immersed in a viscous solvent. The simulation uses Lennard-Jones potentials and numerically integrates the equations of motion using the Velocity Verlet algorithm.
 
-The goal is to compute the **friction tensor** of the solute as a function of time through the time-autocorrelation function of the forces experienced by the solute particles.
+The goal is to compute the **friction tensor** of the solute as a function of time. This is achieved by calculating the time-autocorrelation function of the forces experienced by the solute particles during the simulation.
 
-For further information regarding the physical context and the equations governing the program, please read the file -insertname-.pdf located in the doc folder.
+For further information regarding the physical context and underlying equations, please refer to the `Methodology_and_Implementation.pdf` located in the `doc` folder.
 
 ---
 
 ### 2. Prerequisites
 
-To compile and run this simulation, you need:
+To compile and run this simulation, the following tools and libraries are required: 
 
 1.  **Make**: The GNU Make build tool.
 2.  **GFortran**: The GNU Fortran compiler.
@@ -35,4 +35,4 @@ To compile and run this simulation, you need:
 
 ### 3. Program guide
 
-To understand how to use this Fortran program, please read the User_Guide.pdf manual located in the doc folder.
+To understand how to use this Fortran program, please read the `User_Guide.pdf` manual located in the `doc` folder.
