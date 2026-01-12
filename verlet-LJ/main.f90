@@ -139,7 +139,7 @@ PROGRAM main
   PRINT *, "Velocities assigned and scaled. Drift removed."
   PRINT *, ""  
   
-  PRINT *, "Starting Equilibration (5000 steps)..."
+  PRINT *, "Starting Equilibration..."
   
   ! Allocation of array for initial positions 
   ALLOCATE(pos_solv0(n_solv, 3))
