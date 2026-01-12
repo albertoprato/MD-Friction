@@ -1,5 +1,8 @@
 ## Classical Molecular Dynamics & Friction Tensor Calculation
 
+Author:
+  * Alberto Prato - alberto.prato@studenti.unipd.it
+
 ---
 
 ### Contents
@@ -15,9 +18,6 @@
 This Fortran program simulates the classical molecular dynamics of a solute consisting of four spheres immersed in a viscous solvent. The simulation uses Lennard-Jones potentials and integrates numerically the equations of motion using the Velocity Verlet algorithm.
 
 The goal is to compute the **friction tensor** of the solute as a function of time through the time-autocorrelation function of the forces experienced by the solute particles.
-
-Author:
-  * Alberto Prato - alberto.prato@studenti.unipd.it
 
 ---
 
