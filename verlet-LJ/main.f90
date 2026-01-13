@@ -195,8 +195,6 @@ PROGRAM main
 
   PRINT *, "Starting Molecular Dynamics..."
 
-  vel_solv = 0.0_wp
-
   ! Calculate the forces at t = 0
   CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot) 
