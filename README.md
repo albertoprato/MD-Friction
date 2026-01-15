@@ -40,9 +40,9 @@ The repository is organized into three main directories:
 
 To compile and run this simulation, the following tools and libraries are required: 
 
-1.  **Make**: the GNU Make build tool.
-2.  **GFortran**: the GNU Fortran compiler.
-3.  **FFTW3**: the "Fastest Fourier Transform in the West" library.
+1.  **Make**: GNU Make build tool.
+2.  **GFortran**: GNU Fortran compiler.
+3.  **FFTW3**: "Fastest Fourier Transform in the West" library.
 
 ---
 
