@@ -98,13 +98,13 @@
 	
 	\begin{description}
 		\item[\texttt{force\_module.f90}] \hfill \\
-		Responsible for the evaluation of the forces and the potential energy. It models inter-atomic interactions via the Lennard-Jones potential. The module implements Periodic Boundary Conditions (PBC) utilizing the Minimum Image Convention, and applies a cutoff to optimize the computational cost of the $O(N^2)$ pair-wise interactions.
+		Responsible for the evaluation of the forces and the potential energy. It models inter-atomic interactions via the Lennard-Jones potential. The module implements periodic boundary conditions utilizing the minimum image convention and applies a spherical cutoff.
 		
 		\item[\texttt{minimization\_module.f90}] \hfill \\
-		Performs an initial geometric optimization of the solvent structure, utilizing the conjugate gradient method (Polak-Ribière variant) to drive the system towards a local energy minimum. This procedure is critical for resolving high-energy overlaps in the initial configuration, thereby preventing numerical divergence.
+		Performs an initial geometric optimization of the solvent structure, utilizing the conjugate gradient method (Polak-Ribière variant) to drive the system towards a local energy minimum.
 		
 		\item[\texttt{velocity\_init\_module.f90}] \hfill \\
-		Initializes the solvent velocities from the Maxwell distribution at a target temperature. To ensure the reference frame remains inertial, the module explicitly removes any net center-of-mass drift resulting from the stochastic sampling.
+		Initializes the solvent velocities from the Maxwell distribution at a target temperature. The module explicitly removes any net center-of-mass drift resulting from the stochastic sampling.
 		
 		\item[\texttt{fft\_correlation\_module.f90}] \hfill \\
 		A module acting as an interface to the FFTW3 library. It computes time-correlation functions though FFT.
