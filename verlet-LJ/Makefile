@@ -6,7 +6,6 @@ FC = gfortran
 
 # Compilation flags
 # -I. is needed to search for .mod files in the current directory
-# -g -fbacktrace are useful for debugging if the code crashes
 FFLAGS = -O2 -Wall -I. -I/usr/local/include
 
 # Linker flags (FFTW3 library and Math library)
@@ -35,9 +34,9 @@ $(EXEC): $(OBJ)
 %.o: %.f90
 	$(FC) $(FFLAGS) -c $<
 
-# ==========================================
+# ==============================
 # Module Dependencies definition
-# ==========================================
+# ==============================
 
 # Kinds module
 kinds.o: kinds.f90
