@@ -1,0 +1,621 @@
+\documentclass[12 pt, a4paper]{article}
+\renewcommand{\baselinestretch}{1.25} 
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb, bm}
+\usepackage{enumitem}   
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{authblk}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{titlesec}
+\usepackage{float}
+\geometry{top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{\textbf{Scientific Report}\\[20pt] \Large Classical Molecular Dynamics \& Friction Tensor Calculation  \vspace{7cm}}
+\author{\Large Alberto Prato - University of Padua \\ \href{mailto:albertoprato@studenti.unipd.it}{albertoprato@studenti.unipd.it}}
+\date{}
+
+\begin{document}
+	
+	\maketitle
+	
+	\pagenumbering{roman}
+	
+	\newpage
+	\tableofcontents
+	\newpage
+	
+	\pagenumbering{arabic}
+	
+	\section{Introduction}
+	
+	Classical molecular dynamics (MD) is a computational framework that enables the sampling of phase space trajectories of $N$-body systems, connecting microscopic Hamiltonian to macroscopic ensemble averages. In the context of solvation dynamics, this approach allows the evaluation of dissipative properties through the analysis of force fluctuations. This report presents a theoretical derivation and a computational implementation designed to compute the time-dependent friction tensor (memory kernel) of a massive solute, from first principles.
+	
+	\subsection{Model system}
+	
+	We consider a system composed of four interacting massive moieties, treatable as spheres, embedded in a bath of $N$ particles. The full deterministic classical phase space decomposes into a $12$-dimensional subsystem of ``slow'' Cartesian coordinates $\mathbf{R}$, with conjugate momenta $\mathbf{P}$, and into a $3N$-dimensional bath described by coordinates $\mathbf{r}$ and conjugate momenta $\mathbf{p}$. Here is assumed that all slow coordinates share the same mass $M$ and all bath coordinates share the same mass $m$.
+	
+	The Hamiltonian of the system reads
+	\begin{align}\label{eq:hamiltonian}
+		H &= \frac{1}{2} \, \mathbf{P}^\mathrm{T} \, \mathbf{M}^{-1} \, \mathbf{P} + V(\mathbf{R}) + \frac{1}{2} \, \mathbf{p}^\mathrm{T} \, \mathbf{m}^{-1} \, \mathbf{p} + u_{\rm B}(\mathbf{r}) + u_{\rm int}(\mathbf{R},\mathbf{r}) \\
+		&= H_{0}(\mathbf{R},\mathbf{P}) + H_{\rm B}(\mathbf{r},\mathbf{p},\mathbf{R})
+	\end{align}
+	where $V(\mathbf{R})$, is an external potential acting on the set of slow coordinates (e.g., the PES, which can depend parametrically on $\mathbf{r}$), $u_{\rm B}(\mathbf{r})$ is the interaction potential among the bath coordinates, while $u_{\rm int}(\mathbf{R},\mathbf{r})$ describes the interaction energy between the slow coordinates and the bath coordinates. In the last equality the Hamiltonian has been divided in two parts. $H_{0}$ describes the dynamics of the slow coordinates in vacuum. $H_{\rm B}$ is the Hamiltonian for the solvent interacting with the slow coordinates fixed at $\mathbf{R}$ (and zero momenta).
+	
+	The Liouville equation for the probability density $\rho(\mathbf{Q},\mathbf{\Pi},t)$, with $\mathbf{Q}=(\mathbf{R},\mathbf{r})$ and $\mathbf{\Pi}=(\mathbf{P},\mathbf{p})$, is
+	\begin{equation}\label{eq: Liouville eq}
+		\frac{\partial}{\partial t}\rho(\mathbf{Q},\mathbf{\Pi},t)=-i\hat{\mathcal{L}}\rho(\mathbf{Q},\mathbf{\Pi},t)
+	\end{equation}
+	with
+	\begin{equation}
+		-i\hat{\cal L}=\{H,\cdot\}=\frac{\partial H}{\partial{\mathbf{Q}}}\cdot\frac{
+			\partial}{\partial \mathbf{\Pi}}-\frac{\partial H}{\partial \mathbf{\Pi}}\cdot\frac{\partial}{\partial{\mathbf{Q}}}
+	\end{equation}
+	
+	\subsection{Zwanzig-Mori projection}
+	
+	To recover the Fokker-Planck equation one proceeds with the Zwanzig-Mori projection \cite{zwanzig1961} of the bath coordinates under the hypothesis that such coordinates are fast with respect to $\mathbf{R}$ and $\mathbf{P}$. This is ensured by the conditions $m\ll M$. The projection operator reads
+	\begin{equation}
+		\hat{\cal P}=\rho_{\rm B}(\mathbf{r},\mathbf{p}|\mathbf{R}) \int_{V}d\mathbf{r}d\mathbf{p}
+	\end{equation}
+	where
+	\begin{equation}
+		\rho_{\rm B}(\mathbf{r},\mathbf{p}|\mathbf{R}) = \frac{\exp[-\beta H_{\rm B}(\mathbf{r},\mathbf{p},\mathbf{R})]}{Z(\mathbf{R})}
+	\end{equation}
+	with $\beta=(k_{\rm B}T)^{-1}$, $\rho_{\rm B}$ the Boltzmann equilibrium distribution conditional to the slow coordinates fixed on the value $\mathbf{R}$ and $Z(\mathbf{R})$ the partition function.
+	
+	It is possible to recover an equation for the projected probability density $\tilde{\rho}(\mathbf{R},\mathbf{P},t)$ which reads
+	\begin{align}\label{eq:projected}
+		\begin{split}
+			\frac{\partial}{\partial t}\tilde{\rho}(\mathbf{R},\mathbf{P},t) =& - \left( \mathbf{M}^{-1}\mathbf{P} \right) \cdot \frac{\partial}{\partial \mathbf{R}}\tilde{\rho}(\mathbf{R},\mathbf{P},t) - \tilde{\mathbf{F}}_{\rm ext}(\mathbf{R}) \cdot \frac{\partial}{\partial \mathbf{P}}\tilde{\rho}(\mathbf{R},\mathbf{P},t) \\[5pt]
+			&+\int_{0}^{t}d\tau \, \frac{\partial}{\partial \mathbf{P}} \cdot \left[ \tilde{\bm{\xi}}(\mathbf{R},\tau) \cdot \left(\frac{\partial}{\partial \mathbf{P}} + \beta \mathbf{M}^{-1}\mathbf{P} \right) \tilde{\rho}(\mathbf{R},\mathbf{P},t-\tau) \right]
+		\end{split}
+	\end{align}
+	under the conditions: (i) the solvent is initially in thermal equilibrium with solute, (ii) $m\ll M$, (iii) $N\to\infty$, and (iv) the dynamics is followed along time intervals larger than the characteristic time scales of solvent molecules. The derivation of the equation is reported in appendix \ref{sec:derivation}.
+	
+	The friction tensor is given by
+	\begin{align}
+		\tilde{\bm{\xi}}(\mathbf{R},t) &= \int_{V} d\mathbf{r}d\mathbf{p} \, \delta \mathbf{F}_{\rm int}(\mathbf{r},\mathbf{R}) \cdot \left[ e^{-i\hat{\mathcal{L}}_{\rm B}t} \delta \mathbf{F}_{\rm int}(\mathbf{r},\mathbf{R}) \right]^{\mathrm{T}} \rho_{\rm B}(\mathbf{r},\mathbf{p}|\mathbf{R}) \\[5pt]\label{eqn:friction}
+		&= \Big\langle \delta \mathbf{F}(0) \cdot \delta \mathbf{F}(t)^{\mathrm{T}} \Big\rangle_{\rm B}
+	\end{align}
+	This expression represents the time-autocorrelation function of the fluctuating part of the interaction force, averaged over the equilibrium canonical distribution of the bath, under the condition of steady solute on configuration $\mathbf{R}$. Equation (\ref{eqn:friction}) constitutes the theoretical core of this work. The temporal decay of this memory kernel characterizes the non-Markovian nature of the bath; a rapid decay implies a separation of time scales compatible with a Markovian approximation.
+	
+	\subsection{Time evolution implementation}\label{sec:time-evolution}
+
+	As indicated by equation (\ref{eqn:friction}), computing the friction tensor requires sampling the stochastic force history exerted by the bath on a static solute. Consequently, the simulation strategy involves integrating the classical equations of motion for the solvent particles while keeping the solute degrees of freedom frozen.
+	
+	The interaction terms $u_{\rm B}(\mathbf{r})$ and $u_{\rm int}(\mathbf{R},\mathbf{r})$ in the Hamiltonian (\ref{eq:hamiltonian}) are modeled via the Lennard-Jones (12-6) potential. The general form for the pairwise interaction energy is
+	\begin{equation}\label{eq:LJ}
+		u(r_{ij}) = 4 \epsilon
+		\left[
+		\left( \frac{\sigma}{r_{ij}} \right)^{12}
+		- \left( \frac{\sigma}{r_{ij}} \right)^{6}
+		\right]
+	\end{equation}
+	where distinct parameter sets are adopted for solvent-solvent and solute-solvent interactions. The force exerted on particle $i$ by particle $j$ is derived analytically as the negative gradient of the potential
+	\begin{equation}
+		\mathbf{F}_{ij} (\mathbf{r}_{ij}) = \frac{24 \epsilon}{r_{ij}^2} \left[ 2 \left(\frac{\sigma}{r_{ij}}\right)^{12} - \left(\frac{\sigma}{r_{ij}}\right)^{6} \right] \mathbf{r}_{ij}
+	\end{equation}
+	
+	Once the potentials are known, we solve the Newton's equations of motion, $\mathbf{F} = m \, \ddot{\mathbf{r}}$, applying a finite-difference approach. In particular, a successful simulation algorithm is the velocity Verlet algorithm \cite{swope1982}, chosen for its simplicity, time-reversibility and numerical stability. The algorithm propagates the positions $\mathbf{r}$ and velocities $\mathbf{v}$ from time $t$ to $t + \delta t$ via a three-step procedure:
+	\begin{align}
+		\mathbf{v} \left(t + \tfrac{1}{2}\delta t\right) &= \mathbf{v}(t) + \frac{\delta t}{2m} \mathbf{F}(t) \label{eq:half-kick1} \\
+		\mathbf{r}(t + \delta t) &= \mathbf{r}(t) + \delta t \, \mathbf{v} \left(t + \tfrac{1}{2}\delta t\right) \label{eq:drift} \\
+		\mathbf{v}(t + \delta t) &= \mathbf{v}\!\left(t + \tfrac{1}{2}\delta t\right) + \frac{\delta t}{2m} \mathbf{F}(t + \delta t) \label{eq:half-kick2}
+	\end{align}
+	this corresponds to a ``half-kick, drift, half-kick'' scheme: velocities are advanced by a half-step using the current forces, positions are drifted using the updated half-step velocities, forces are re-evaluated at the new positions, and finally, velocities are fully advanced. This scheme translates directly into a Fortran implementation:
+	\begin{lstlisting}[language=Fortran]
+	! Force evaluation at t
+	CALL force_calculation(...)
+	! Half-kick
+	vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
+	! Drift
+	pos_solv = pos_solv + dt * vel_solv
+	! Force evaluation at t + dt
+	CALL force_calculation(...)
+	! Half-kick
+	vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)\end{lstlisting}
+	in this snippet, \texttt{pos\_solv}, \texttt{vel\_solv}, and \texttt{force} are $(N,3)$ arrays representing the phase space coordinates and forces of the solvent particles.
+	
+	\newpage
+	
+	\section{Programming strategy}
+	
+	\subsection{Architectural paradigm}
+	
+	The software is designed using a procedural approach, which is a computer-programming paradigm that aligns with the structure of this many-body physical problem. Unlike object-oriented programming, which fragments the problem into discrete objects with associated methods, the procedural approach allows the system's data to be stored in contiguous memory arrays, enabling the evaluation of the forces and time-integration steps in efficient loops. 
+	
+	Furthermore, the code is organized into distinct \texttt{MODULE}s that encapsulate specific physical jobs. This ensures that the definition of the physics remains decoupled from the numerical integration algorithms.
+	
+	\subsection{Language choice: Fortran}
+	
+	The implementation utilizes Fortran 90, which was selected for its advantages in MD simulations. A primary benefit is that the language treats arrays as first-class mathematical entities. This allows for a direct and readable translation of physical equations into source code. For instance, the drift step of velocity Verlet algorithm is implemented as a single vector instruction, \texttt{vel = vel + 0.5 * dt * force / mass}. Additionally, Fortran offers explicit dynamic memory management (\texttt{ALLOCATE}/\texttt{DEALLOCATE}), which is essential for defining the system size at runtime.
+	
+	The overall logical flow of the program is depicted in Fig. \ref{fig:flowchart}.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.4\textwidth]{../../Downloads/Flowchart}
+		\caption{Flowchart of the MD simulation workflow.}
+		\label{fig:flowchart}
+	\end{figure}
+	
+	\section{Module description}
+	
+	As illustrated in the workflow diagram (Fig. \ref{fig:flowchart}), the simulation is driven by the \texttt{main.f90} program. This unit manages the sequential execution of the computational stages, as it handles:
+	\begin{enumerate}[label=(\roman*)]
+		\item the reading of simulation  parameters (\texttt{input.txt}) and the initial configuration (\texttt{system.xyz});
+		\item the geometric optimization of the initial solvent structure;
+		\item the initialization of solvent particles' velocities drawn from a Maxwell distribution at the target temperature;
+		\item an equilibration phase, during which the system relaxes from a lattice-like to a liquid state;
+		\item the main molecular dynamics, where the phase space trajectory is simulated and the history of the forces exerted on the solute is recorded;
+		\item the final analysis, which processes the stored force history to compute the time-dependent friction tensor.
+	\end{enumerate}
+	
+	Following this structural hierarchy, the specific computational tasks are delegated to five specialized modules. These are described below in the order of their invocation and dependency.
+	
+	\subsection{Force and potential energy calculation: \texttt{force\_module}}
+	
+	The \texttt{force\_module} constitutes the physical core of the simulation, responsible for the evaluation of the total potential energy and the forces acting on all particles. 
+	
+	The module implements the Lennard-Jones 12-6 potential (\ref{eq:LJ}) to model both solvent-solvent and solute-solvent interactions. To simulate a bulk fluid environment, the routine implements periodic boundary conditions (PBC) utilizing the ``minimum image convention''. This ensures topological consistency, allowing particles to interact with the nearest periodic image of their neighbors. The implementation details of the PBC are provided in Appendix \ref{sec:PBC}.
+	
+	\subsubsection{Computational optimization}
+	
+	To reduce the computational cost, a spherical truncation is applied. Interactions between particles separated by a distance $r_{ij} > r_{\rm cutoff}$ are neglected. For a typical cutoff radius of $r_{\rm cutoff} = 2.5 \, \sigma$, the magnitude of the Lennard-Jones potential at the boundary is just $1.6\%$ of the well depth $\epsilon$, rendering the error introduced by truncation negligible.
+	
+	The numerical evaluation of the potential energy and forces requires a summation over particle pairs. To optimize efficiency, the algorithm exploits Newton's third law, which allows the summation to be restricted to unique pairs $(i, j)$ where $i < j$. This reduces the number of force evaluations by a factor of two. The resulting nested loop structure is illustrated below:
+	\begin{lstlisting}[language=Fortran]
+	! Loop over the particle i
+	DO i = 1, n_solv - 1
+	  ! Loop over the particle k (unique pairs only)
+	  DO k = i + 1, n_solv
+        ...
+        ! Evaluate forces and potential
+        ...
+	  END DO
+	END DO \end{lstlisting}
+	
+	\subsection{Initial energy minimization: \texttt{minimization\_module}}
+	
+	The initialization of a MD simulation requires the construction of a starting configuration from packing algorithms. A frequent outcome of such procedures is the occurrence of ``steric clashes''. These high-energy overlaps result in enormous repulsive forces which, upon integration, would lead to numerical divergence. To resolve this, the system must undergo a structural relaxation process prior to the assignment of thermal velocities. Physically, this corresponds to a descent on the potential energy surface toward a local minimum, effectively cooling the system to $0$ K.
+	
+	The \texttt{minimization\_module} implements this optimization using the Conjugate Gradient (CG) method, specifically the Polak-Ribi\`{e}re variant. Unlike the Steepest Descent method, which follows the local negative gradient and often suffers from oscillatory ``zig-zag'' convergence, the CG method constructs a search direction that is conjugate to the previous direction, ensuring a faster convergence rate. Further details on the CG method can be found in Appendix \ref{sec:CG}.
+	
+	\subsection{Velocity initialization: \texttt{velocity\_init\_module}}\label{sec:velocit-init}
+	
+	The transition from a static, energy-minimized configuration ($0$ K) to a dynamic trajectory requires the assignment of initial velocities. The \texttt{velocity\_init\_module} performs this stochastic initialization by sampling atomic velocities from the Maxwell distribution at the target temperature $T$.
+	
+	In the canonical ensemble, the probability density function for a Cartesian velocity component $v_{\alpha}$ (where $\alpha \in \{x, y, z\}$) of a particle with mass $m$ is given by the Gaussian form
+	\begin{equation}
+		\rho(v_{\alpha}) = \sqrt{\frac{m}{2 \pi k_B T}} \exp\left( -\frac{m v_{\alpha}^2}{2 k_B T} \right)
+	\end{equation}
+	This distribution is characterized by a zero mean and a standard deviation of $\sigma = \sqrt{k_B T / m}$. To generate numerical values adhering to this distribution, the module employs the Box-Muller transform, an algorithm that maps uniformly distributed random numbers, $\xi \in (0, 1)$, onto the normal distribution. Some details of this transformation are provided in Appendix \ref{sec:Box-Muller}. The implementation of the random assignment is shown below:
+	\begin{lstlisting}[language=Fortran]
+	sigma_v = SQRT((kb * temp) / mass)    ! Standard deviation
+	CALL RANDOM_SEED()
+	
+	DO i = 1, n_solv
+	  DO k = 1, 3
+	    CALL RANDOM_NUMBER(r1)    ! Generates uniform number in (0,1)
+	    CALL RANDOM_NUMBER(r2)    ! Generates uniform number in (0,1)
+	    
+	    ! Gaussian number with mean 0 and std.dev. = sigma_v
+	    vel_solv(i, k) = sigma_v * SQRT(-2.0_wp * LOG(r1)) & 
+	                     * COS(2.0_wp * pi * r2)
+	  END DO
+	END DO \end{lstlisting}
+	
+	\subsubsection{Inertial frame correction and temperature rescaling}
+	
+	Due to the stochastic nature of the sampling, the initial random assignment may result in a non-zero net velocity. This would manifest as a translation of the entire system center of mass (COM) during the simulation. To ensure the dynamics evolve in a inertial reference frame, the module explicitly computes the COM velocity and subtracts it from every particle. Subsequently, to ensure the instantaneous kinetic temperature matches the target temperature, the velocities are rescaled based on the equipartition theorem ($E_{kin} = \frac{3}{2} N k_B T$).
+	
+	\subsection{Equilibration phase and main molecular dynamics}
+	
+	Following the structural relaxation (\texttt{minimization\_module}) and the assignment of velocities (\texttt{velocity\_init\_module}), the system must undergo an equilibration phase. During this period, the trajectory is integrated using the velocity Verlet scheme described in Section \ref{sec:time-evolution}, but the phase space data is discarded. The objective is to allow the system to escape the initial minimum configuration and achieve the structural disorder characteristic of a fluid. At the end of this equilibration period, all memory of the initial configuration should be lost. This loss of memory is essential for the computation of the friction tensor, which is strictly valid only when measuring fluctuations around thermal equilibrium rather than non-equilibrium reorganization forces.
+	
+	\subsubsection{Equilibration criteria}
+	
+	The equilibration of the system can be monitored by analyzing the time-evolution of the potential energy and the mean squared displacement (MSD). The transitions to the liquid phase is considered complete only when the following criteria are met:
+	\begin{enumerate}
+		\item In the initial stages, the potential energy typically exhibits an increase from the deep minima of the crystal-like packing to the higher average energy of a liquid. The equilibration period should be extended at least until the potential energy ceases to drift and begins to oscillate around a constant mean value.
+		
+		\item The physical state of the solvent is also verified by calculating the MSD of the solvent particles relative to their initial positions
+		\begin{equation}
+			\text{MSD}(t) = \frac{1}{N} \sum_{i=1}^{N} \left\langle \big|\mathbf{r}_i(t) - \mathbf{r}_i(0) \big|^2 \right\rangle
+		\end{equation}
+		A solid-like state is characterized by an MSD that oscillates around a constant mean value, whereas a liquid state is identified by a linear growth of the MSD with time. 
+		
+		To further demonstrate the readability and clarity of the Fortran code, the implementation of the MSD calculation is shown below:
+		\begin{lstlisting}[language=Fortran]
+	msd = 0.0_wp
+	DO i = 1, n_solv
+	  dist_sq = 0.0_wp
+	  DO k = 1, 3
+	    dist_sq = dist_sq + (pos_solv(i, k) - pos_solv0(i, k))**2
+	  END DO
+	  msd = msd + dist_sq
+	END DO
+	msd = msd / DBLE(n_solv) \end{lstlisting}
+	\end{enumerate}
+	
+	During the equilibration phase, the time evolution of these quantities is saved to \texttt{equilibration\_stats.dat} to verify that the relaxation time is sufficient. The plots of these parameters are presented in Section \ref{sec:equilibration}.
+	
+	\subsubsection{Main MD}
+	
+	Once equilibration is certified, the main MD loop commences. In this phase, the system is propagated for a defined number of steps using the same integrator. The crucial difference is that the forces exerted by the bath on the solute particles are explicitly stored at every time step into the \texttt{force\_history} array. This dataset serves as the input for the analysis performed by the subsequent modules.
+	
+	Furthermore, as illustrated in Fig. \ref{fig:flowchart}, the system trajectory is sampled and saved to the file \texttt{trajectory.xyz} during this phase. To minimize disk usage, the coordinates are written every 100 steps, implemented via the conditional logic \texttt{IF (MOD(step, 100) == 0)}.
+	
+	\subsection{Time correlation function: (\texttt{fft\_correlation\_module})}
+	
+	The central objective of the post-processing phase is the evaluation of the memory kernel $\tilde{\bm{\xi}}(t)$, defined as the time-autocorrelation function of the fluctuating forces exerted on the solute. This function quantifies the persistence of memory in the system as it measures how long a force fluctuation at time $t_0$ continues to influence the system at a later time $t_0 + t$. 
+	
+	For a discrete time series of force vectors sampled at intervals $\delta t$, we label successive timesteps with $\tau$, such that $t = \tau \, \delta t$. Formally, the discrete autocorrelation function between two force components $\alpha$ and $\beta$ for a lag time $\tau$ is defined as
+	\begin{equation}\label{eq:discrete} 
+		C_{\alpha \beta}(\tau) = \big\langle \delta F_\alpha(0) \, \delta F_\beta(\tau) \big\rangle = \frac{1}{\tau_{\rm max}} \sum_{\tau_0 = 1}^{\tau_{\rm max}} \delta F_\alpha(\tau_0) \, \delta F_\beta (\tau_0 + \tau) 
+	\end{equation}
+	where the bracket notation indicates an average over $\tau_{\rm max}$ time origins.
+	
+	\subsubsection{The fast Fourier transform method}
+	
+	A direct evaluation of equation (\ref{eq:discrete}) requires nested summations for every lag time $\tau$, resulting in an algorithmic complexity of $\mathcal{O}(N^2)$. For long MD trajectories (typically $10^5 - 10^6$ steps) this becomes a computational bottleneck. To overcome this, the \texttt{fft\_correlation\_module} invokes the convolution/correlation theorem, which relates the correlation of two signals in the time domain to pointwise multiplication in the frequency domain. 
+	
+	It follows from this theorem that the autocorrelation of a real signal simplifies to the inverse transform of the spectral density
+	\begin{equation}\label{eq:spectral} 
+		C_{\alpha \beta}(\tau) = \mathcal{F}^{-1} \left[ \delta \hat{F}_\alpha^{*}(\omega) \, \delta \hat{F}_\beta(\omega) \right] 
+	\end{equation}
+	where $\delta \hat{F}(\omega) = \mathcal{F}[\delta F(t)]$ is the discrete Fourier transform of the fluctuating force component. By utilizing the fast Fourier transform (FFT) algorithm the complexity is reduced to $\mathcal{O}(N \log_2 N)$.
+	
+	\subsubsection{Implementation with FFTW library}
+
+	The \texttt{fft\_correlation\_module} utilizes the FFTW3 (\textit{Fastest Fourier Transform in the West}) library to perform the forward and backward transforms. The core Fortran implementation, capable of computing both auto- ($\alpha=\beta$) and cross-correlations ($\alpha \neq \beta$), is shown below:
+	\begin{lstlisting}[language=Fortran]
+	! Calculate fluctuations from input arrays x and y
+	mean_x = SUM(x) / DBLE(N)
+	mean_y = SUM(y) / DBLE(N)
+	
+	! Copy real values into complex vector
+	DO i = 1, N
+	  signal_x(i) = CMPLX(x(i)- mean_x, 0.0_wp, KIND=C_DOUBLE_COMPLEX) 
+	  signal_y(i) = CMPLX(y(i)- mean_y, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
+	END DO
+	
+	! Forward FFT (from time to frequency)
+	CALL fftw_execute_dft(plan_fwd_x, signal_x, fft_x)
+	CALL fftw_execute_dft(plan_fwd_y, signal_y, fft_y)
+	
+	! Compute power spectrum ( |F(w)|^2 )
+	DO i = 1, N_pad    !N_pad = 2 * N (required for linear correlation)
+	  power_spectrum(i) = CONJG(fft_x(i)) * fft_y(i)
+	END DO
+	
+	! Backward FFT (from frequency to time)
+	CALL fftw_execute_dft(plan_bwd, power_spectrum, result_complex)\end{lstlisting}
+	
+	\subsection{Friction tensor computation: (\texttt{friction\_module})}\label{sec:friction-tensor}
+		
+	The final stage of the program is managed by the \texttt{friction\_module}. This unit allows the calculation of the friction tensor elements $\xi_{ij}^{\alpha \beta}(t)$ by invoking the FFT routine. 
+	
+	In the current version available in the repository, the implementation is explicitly restricted to the computation of the diagonal elements, $\xi_{ii}^{\alpha \alpha}(t)$. This choice was made to minimize memory consumption and focuses the analysis on the self-friction coefficients experienced by the four solute particles.
+	
+	However, the code allows for a straightforward extension to the full tensor, which would capture both spatial cross-correlations ($\alpha \neq \beta$) and coupling between distinct particles ($i \neq j$). The generalized algorithm required to compute the complete tensor consists of a quadruply nested loop structure, as demonstrated below:
+	\begin{lstlisting}[language=Fortran] 
+	DO I = 1, n_solute 
+	  DO a = 1, 3
+	    ! Extract force history for solute particle I
+	    force_traj_A = force_history(I, a, :)
+	      
+	    DO J = 1, n_solute
+	      DO b = 1, 3
+	        ! Extract force history for solute particle J
+	        force_traj_B = force_history(J, b,  :)
+	    
+	        ! Compute Correlation via FFT
+	        CALL compute_correlation_fft(force_traj_A, force_traj_B, &
+	                                   tensor_element)
+	      END DO
+	    END DO
+	  END DO
+	END DO \end{lstlisting}
+	in this snippet, \texttt{force\_history} is a three-dimensional array containing the complete time series of the forces exerted on the solute. The three indices correspond to the solute particle ($1,2,3,4$), the Cartesian dimension ($x, y, z$), and the time step, respectively.
+	
+	\newpage
+	
+	\section{Results and Discussion}
+	
+	To validate the computational implementation and demonstrate the capabilities of the code, a simulation was performed on a representative sand-box.
+	
+	\subsection{Simulation setup and parameters}
+	
+	The illustrative test case consists of a solution of 4 massive solute particles (modeled as carbon atoms) embedded in a bath of 11.452 solvent particles (modeled as water). The initial configuration was generated using the \texttt{Packmol} software \cite{packmol}, which distributed the molecules within a cubic simulation box of side length $L = 20.0$ \AA.
+	
+	To emulate a realistic chemical environment, the Lennard-Jones interaction parameters were adapted from the standard OPLS-AA (for solute) and TIP3P (for solvent) force fields as reported by Jorgensen \textit{et al.} \cite{jorgensen_combined}. The simulation employs a consistent system of units: distances in Ångströms, time in picoseconds, mass in Daltons, and temperature in Kelvin. The specific simulation parameters provided in the \texttt{input.txt} file are listed below:
+	\begin{lstlisting}[language=Fortran]
+	50000 0.001              ! nk, dt (ps)
+	18.015 63.597 3.1507     ! Solvent: m (Dalton), epsilon_OO, sigma_OO
+	43.472 3.338             ! Solute: epsilon_CO, sigma_CO (angstrom)
+	298.15 0.831             ! Temperature (K), Boltzmann const
+	20.0                     ! L_box used in packmol \end{lstlisting}
+	
+	The system dynamics were propagated for a total duration of $50$ ps, discretized into $50.000$ time steps of $\delta t = 0.001$ ps.
+	
+	\subsection{Equilibration analysis}\label{sec:equilibration}
+	
+	The first phase of the analysis concerns the equilibration of the system. As shown in Figure \ref{fig:equilibration}, the transition from the static, energy-minimized initial condition to a dynamic liquid state is monitored via the total potential energy and the MSD.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{../Tesi/Friction-Tensor/Molecular-Dynamics/LJ-2/11452/equilibration}
+		\caption{Time evolution of system properties during the initial equilibration phase.}
+		\label{fig:equilibration}
+	\end{figure}
+	
+	The upper panel of Fig. \ref{fig:equilibration} illustrates the rapid thermalization of the system. The potential energy rises sharply from the deep minimum of the optimized packing and stabilizes around a stationary mean value within the first few fractions of a picosecond. This indicates that the system has successfully escaped the initial energy minimum. Simultaneously, the bottom panel shows that the MSD exhibits an immediate linear time-dependence, characteristic of the diffusive regime of a liquid, confirming that no lattice-like memory of the initial Packmol configuration remains.
+	
+	\subsection{Friction tensor analysis}
+	
+	The molecular dynamics trajectory was analyzed to compute the time-dependent friction tensor. As detailed in Section \ref{sec:friction-tensor}, the current implementation focuses on the diagonal elements of the tensor, $\xi_{ii}^{\alpha \alpha}(t)$.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{../Tesi/Friction-Tensor/Molecular-Dynamics/LJ-2/11452/friction-diagonal}
+		\caption{Time-dependent memory kernel $\tilde{\xi}(t)$ (diagonal components).}
+		\label{fig:friction-diagonal}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{../Tesi/Friction-Tensor/Molecular-Dynamics/LJ-2/11452/friction-diagonal-zoom}
+		\caption{Short-time behavior of the memory kernel $\tilde{\xi}(t)$ (0 - 3 ps).}
+		\label{fig:friction-diagonal-zoom}
+	\end{figure}
+	
+	Fig. \ref{fig:friction-diagonal} displays the time evolution of the friction kernel for the four solute particles. To resolve the relevant timescales of the solvent-solute coupling, the analysis focuses on the short-time behavior shown in Fig. \ref{fig:friction-diagonal-zoom}. The memory kernel is characterized by a large initial value at $t=0$. This is followed by a rapid decay occurring within a characteristic timescale of $0.1 - 0.2$ ps. The rapid loss of correlation suggests that for phenomena occurring on timescales $t \gg 0.5$ ps, memory effects become negligible, and the dynamics can be effectively described within the Markovian approximation.
+	
+	\subsection{Conclusions and Future Perspectives}
+	
+	The computational framework presented herein establishes a valid alternative to hydrodynamic models for the evaluation of the friction tensor. While standard hydrodynamic approaches rely on the hydrodynamic radius, which is a phenomenological parameter that can become ill-defined or physically misleading, the present method computes dissipation directly from microscopic forces.
+	
+	Despite the successful validation of the current implementation, future development will extend the program's capabilities in two key aspects:
+	\begin{enumerate}
+		\item Systematically varying the solute geometry to map the friction tensor $\tilde{\bm{\xi}}(\mathbf{R}, t)$ across the conformational landscape.
+		\item Implementing the transformation to project the Cartesian friction tensor onto internal coordinates.
+	\end{enumerate}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	\clearpage
+	\newpage
+	
+	\appendix
+	
+	\titleformat{\section}
+	{\normalfont\Large\bfseries}
+	{\appendixname~\thesection:}
+	{0.5em}
+	{}
+	
+	\section{Derivation of equation (\ref{eq:projected})}\label{sec:derivation}
+	
+	It is possible to divide the Liouvillean into
+	\begin{equation}\label{eq: divide Liouv}
+		i\hat{\cal L}=i\hat{\cal L}_{0}+i\hat{\cal L}_{\rm B}
+	\end{equation}
+	with
+	\begin{equation}
+		i\hat{\cal L}_{0}=\mathbf{P}^\mathrm{T} \, \mathbf{M}^{-1} \cdot \frac{\partial}{\partial \mathbf{R}} + \mathbf{F}_{0}(\mathbf{r},\mathbf{R}) \cdot \frac{\partial}{\partial \mathbf{P}}
+	\end{equation}
+	and
+	\begin{equation}
+		i\hat{\cal L}_{\rm B}=\mathbf{p}^\mathrm{T} \, \mathbf{m}^{-1} \cdot\frac{\partial}{\partial{\mathbf{r}}} + {\mathbf{F}}_{\rm B}({\mathbf{r}},\mathbf{R}) \cdot \frac{\partial}{\partial{\mathbf{p}}}
+	\end{equation}
+	with the forces
+	\begin{equation}
+		\mathbf{F}_{0}(\mathbf{R},\mathbf{r}) = -\frac{\partial}{\partial \mathbf{R}} (V(\mathbf{R}) + u_{\rm int}(\mathbf{R},\mathbf{r}))=\mathbf{F}_{\rm ext}(\mathbf{R}) + {\mathbf{F}}_{\rm int}^{(\mathbf{R})}(\mathbf{R},{\mathbf{r}})
+	\end{equation}
+	and
+	\begin{equation}
+		{\mathbf{F}}_{\rm B}(\mathbf{r},\mathbf{R}) = -\frac{\partial}{\partial{\mathbf{r}}} (u_{\rm B}(\mathbf{r}) + u_{\rm int}(\mathbf{r},\mathbf{R})) = {\mathbf{F}}_{\rm BB}(\mathbf{r}) + \mathbf{F}_{\rm int}^{(\mathbf{r})}(\mathbf{r},\mathbf{R})
+	\end{equation}
+	where $\mathbf{F}_{\rm ext}(\mathbf{R})$ is the force from the external potential (PES), ${\mathbf{F}}_{\rm BB}(\mathbf{r})$ is the internal force among bath particles, ${\mathbf{F}}_{\rm int}^{(\mathbf{R})}(\mathbf{R},{\mathbf{r}})$ is the force exerted by the bath on the system and $\mathbf{F}_{\rm int}^{(\mathbf{r})}(\mathbf{r},\mathbf{R})$ is the force exerted by the system on the bath.
+	
+	From now on the dependence on the coordinates $\mathbf{Q}, \mathbf{\Pi}$ has been dropped to keep the expressions more compact. We call $f(t)$ and $g(t)$ the two projections
+	\begin{equation}\label{eq: def of f}
+		f(t) = \hat{\cal P}\rho(t) = \rho_{\rm B} \, \tilde{\rho}(t)
+	\end{equation}
+	and
+	\begin{equation}
+		g(t)=(1-\hat{\cal P})\rho(t)
+	\end{equation}
+	By applying $\hat{\mathcal{P}}$ and $\hat{\mathcal{Q}} = 1 - \hat{\mathcal{P}}$ to equation (\ref{eq: Liouville eq}) and solving formally for $g(t)$ (assuming the bath is initially thermally equilibrated, i.e., the $g(0)$ term is equals to zero), we obtain
+	\begin{equation} \label{eq:NZ}
+		\frac{\partial f(t)}{\partial t} = -i\hat{\mathcal{P}}\hat{\mathcal{L}}f(t) + \int_{0}^{t} d\tau \, \hat{\mathcal{P}}i\hat{\mathcal{L}} \, e^{-i\hat{\mathcal{Q}}\hat{\mathcal{L}}\tau} \, i\hat{\mathcal{Q}}\hat{\mathcal{L}} f(t-\tau).
+	\end{equation}
+	which is the Nakajima-Zwanzig generalized master equation. 
+	
+	The first term on the right-hand side of equation (\ref{eq:NZ}) represents the average evolution (reversible dynamics). Using equations (\ref{eq: divide Liouv}) and (\ref{eq: def of f}) and noting that $i\hat{\mathcal{L}}_{\rm B} \rho_{\rm B} = 0$, the first term reads
+	\begin{equation} \label{eq:drift}
+		-i\hat{\mathcal{P}}\hat{\mathcal{L}} f(t) = -\rho_{\rm B} \left[ \mathbf{M}^{-1}\mathbf{P} \cdot \frac{\partial}{\partial \mathbf{R}} + \tilde{\mathbf{F}}_{\rm ext} \cdot \frac{\partial}{\partial \mathbf{P}} \right] \tilde{\rho}(t)
+	\end{equation}
+	where $\tilde{\mathbf{F}}_{\rm ext}$ is the total force acting on the slow coordinates, averaged over the equilibrium bath distribution
+	\begin{equation}
+		\tilde{\mathbf{F}}_{\rm ext} = \int_{V} d\mathbf{r}d\mathbf{p} \, \mathbf{F}_{0} \, \rho_{\rm B}
+	\end{equation}
+	
+	The integral term of equation (\ref{eq:NZ}) represents the dissipative dynamics. First, we want to evaluate the term $i\hat{\mathcal{Q}} \hat{\mathcal{L}} (\rho_{\rm B} \tilde{\rho})$ of the integrand. Using the product rule (Leibniz)
+	\begin{equation}\label{eq: product rule}
+		i\hat{\mathcal{L}} (\rho_{\rm B} \tilde{\rho}) = (i\hat{\mathcal{L}} \rho_{\rm B}) \tilde{\rho} + \rho_{\rm B} (i\hat{\mathcal{L}} \tilde{\rho})
+	\end{equation}
+	and since $\rho_{\rm B}$ does not depend on $\mathbf{P}$ but depends on $\mathbf{R}$ via the interaction potential and the partition function
+	\begin{equation}
+		i\hat{\mathcal{L}} \rho_{\rm B} = \mathbf{M}^{-1}\mathbf{P} \cdot \frac{\partial }{\partial \mathbf{R}} \rho_{\rm B}
+	\end{equation}
+	where
+	\begin{align}
+		\frac{\partial \rho_{\rm B}}{\partial \mathbf{R}} &= \rho_{\rm B} \frac{\partial}{\partial \mathbf{R}} \left(-\beta u_{\rm int} - \ln Z\right) \\[5pt]
+		&= \rho_{\rm B} \beta \left( \mathbf{F}_{\rm int}^{(\mathbf{R})} - \langle \mathbf{F}_{\rm int}^{(\mathbf{R})} \rangle_{\rm B} \right) = \beta \rho_{\rm B} \; \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}
+	\end{align}
+	where in the last equality we identified the force $\mathbf{F}_{\rm int}^{(\mathbf{R})}$ and the mean force $\langle \mathbf{F}_{\rm int}^{(\mathbf{R})} \rangle_{\rm B} = \beta^{-1} \frac{\partial}{\partial \mathbf{R}} \ln Z$ and we defined the fluctuating force $\delta \mathbf{F}_{\rm int}^{(\mathbf{R})} = \mathbf{F}_{\rm int}^{(\mathbf{R})} - \langle \mathbf{F}_{\rm int}^{(\mathbf{R})} \rangle_{\rm B}$. Thus the first addend of equation (\ref{eq: product rule}) reads
+	\begin{equation}
+		(i\hat{\mathcal{L}} \rho_{\rm B}) \tilde{\rho} = \beta \left( \mathbf{M}^{-1}\mathbf{P} \cdot \delta \mathbf{F}_{\rm int}^{(\mathbf{R})} \right) \rho_{\rm B} \tilde{\rho}.
+	\end{equation}
+	
+	The second addend of equation (\ref{eq: product rule}) is simply evaluated applying $i\hat{\mathcal{L}}_0$ to $\tilde{\rho}$
+	\begin{equation}
+		\rho_{\rm B} (i\hat{\mathcal{L}} \tilde{\rho}) = \rho_{\rm B} \left( \mathbf{M}^{-1}\mathbf{P} \cdot \frac{\partial \tilde{\rho}}{\partial \mathbf{R}} + (\mathbf{F}_{\rm ext} + \mathbf{F}_{\rm int}^{(\mathbf{R})}) \cdot \frac{\partial \tilde{\rho}}{\partial \mathbf{P}} \right)
+	\end{equation}
+	
+	We now apply $\hat{\mathcal{Q}}$ which removes any term that is averaged over the bath, so that the surviving terms are only those containing the interaction force fluctuations
+	\begin{equation}\label{eq: source}
+		i\hat{\mathcal{Q}}\hat{\mathcal{L}} f(t) = \rho_{\rm B} \, \delta \mathbf{F}_{\rm int}^{(\mathbf{R})} \cdot \left( \frac{\partial}{\partial \mathbf{P}} + \beta \mathbf{M}^{-1}\mathbf{P} \right) \tilde{\rho}(t)
+	\end{equation}
+	where we see that $i\hat{\mathcal{Q}}\hat{\mathcal{L}}$ acts as a ``fluctuation generator''.
+	
+	We substitute equation (\ref{eq: source}) into the integral term of equation (\ref{eq:NZ}). We adopt the approximation of a fast bath, replacing the projected propagator $e^{-i\hat{\mathcal{Q}}\hat{\mathcal{L}}\tau}$ with the bath propagator $e^{-i\hat{\mathcal{L}}_{\rm B}\tau}$. This implies that the system variables are effectively frozen on the timescale of bath relaxation. The integral term reads
+	\begin{equation}
+		\mathcal{I} = \int_{0}^{t} d\tau \, \hat{\mathcal{P}}i\hat{\mathcal{L}} \, e^{-i\hat{\mathcal{L}}_{\rm B}\tau} \left[ \rho_{\rm B} \, \delta \mathbf{F}_{\rm int}^{(\mathbf{R})} \cdot \left( \frac{\partial}{\partial \mathbf{P}} + \beta \mathbf{M}^{-1}\mathbf{P} \right) \tilde{\rho}(t-\tau) \right]
+	\end{equation}
+	
+	The operator $\hat{\mathcal{P}}i\hat{\mathcal{L}}$ involves an integration over the bath variables. Again, the only non-vanishing contribution comes from the $\mathbf{F}_{\rm int}^{(\mathbf{R})} \cdot \frac{\partial}{\partial \mathbf{P}}$ term within $i\hat{\mathcal{L}}_0$. The integral term becomes
+	\begin{align}
+		\mathcal{I} =& \int_{0}^{t} d\tau \frac{\partial}{\partial \mathbf{P}} \cdot \left[ \int_{V} d\mathbf{r} d\mathbf{p} \, \rho_{\rm B} \, \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}(0) \cdot \left( e^{-i\hat{\mathcal{L}}{\rm B}\tau} \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}(0) \right)^{\mathrm{T}} \right] \cdot \left( \frac{\partial}{\partial \mathbf{P}} + \beta \mathbf{M}^{-1}\mathbf{P} \right) \tilde{\rho}(t-\tau) \nonumber \\
+		=& \int_{0}^{t} d\tau \frac{\partial}{\partial \mathbf{P}} \cdot \left[ \int_{V} d\mathbf{r} d\mathbf{p} \, \rho_{\rm B} \, \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}(0) \cdot \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}(-\tau)^{\mathrm{T}} \right] \cdot \left( \frac{\partial}{\partial \mathbf{P}} + \beta \mathbf{M}^{-1}\mathbf{P} \right) \tilde{\rho}(t-\tau)
+	\end{align}
+	
+	The term in the square brackets is the time-correlation function of the fluctuating forces, identified as the friction tensor
+	\begin{equation}
+		\tilde{\bm{\xi}}(\tau) = \Big\langle \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}(0) \cdot \delta \mathbf{F}_{\rm int}^{(\mathbf{R})}(\tau)^{\mathrm{T}} \Big\rangle_{\rm B}
+	\end{equation}
+	
+	Combining the drift term from equation \eqref{eq:drift} and the integral term derived above we arrive at the equation for the evolution of the projected probability density
+	\begin{align}
+		\frac{\partial}{\partial t}\tilde{\rho}(t) =& - \left( \mathbf{M}^{-1}\mathbf{P} \right) \cdot \frac{\partial}{\partial \mathbf{R}}\tilde{\rho}(t) - \tilde{\mathbf{F}}_{\rm ext} \cdot \frac{\partial}{\partial \mathbf{P}}\tilde{\rho}(t) \nonumber \\ 
+		& +\int_{0}^{t} d\tau \, \frac{\partial}{\partial \mathbf{P}} \cdot \left[ \tilde{\bm{\xi}}(\tau) \cdot \left(\frac{\partial}{\partial \mathbf{P}} + \beta \mathbf{M}^{-1}\mathbf{P} \right) \tilde{\rho}(t-\tau) \right]
+	\end{align}
+	
+	
+	\newpage
+	
+	\section{Periodic boundary conditions}\label{sec:PBC}
+	
+	To approximate the properties of a macroscopic bulk fluid the simulation employs periodic boundary conditions. The central cubic simulation cell of side length $L$ is conceptually replicated throughout space to form an infinite lattice. Consequently, particles are free to cross the boundaries of the primary cell; topological continuity is preserved by the re-entry of the corresponding periodic image through the opposite face, ensuring the conservation of number density.
+	
+	For systems governed by short-range potentials, the calculation of pairwise interactions is defined by the minimum image convention. Under this protocol, a particle $i$ interacts solely with the nearest periodic image of any other particle $j$. A prerequisite for the validity of the minimum image convention is that $r_{\rm cutoff} \le L/2$, which guarantees that a particle does not interact with its own periodic image.
+	
+	In the Fortran implementation, the periodic boundaries and minimum image distances are handled using the nearest integer function \texttt{ANINT}. To maintain coordinates within the central box (assuming the origin is at the center), particle positions are re-mapped whenever they drift across a boundary:
+	\begin{lstlisting}[language=Fortran]
+	pos_solv(i, 1) = pos_solv(i, 1) - &
+	                 box_L * ANINT(pos_solv(i, 1) / box_L)\end{lstlisting}
+	where the first index of \texttt{pos\_solv(:,:)} select the $i$-th solvent particle and the second index the dimension. Here \texttt{box\_L} is a variable containing the cubic box length $L$. 
+	
+	Most critically, the distance vector $\mathbf{r}_{ij}$ must represent the shortest path between particles through the periodic lattice. This is calculated by applying the same wrapping logic to the distance vector:
+	\begin{lstlisting}[language=Fortran]
+	diff(dim) = pos(j, dim) - pos(i, dim)
+	diff(dim) = diff(dim) - box_L * ANINT(diff(dim) / box_L)\end{lstlisting}
+	This operation ensures that \texttt{diff(dim)} correctly represents the component of the distance vector between particle $i$ and the closest image of particle $j$.
+	
+	\newpage
+	
+	\section{Conjugate gradient method}\label{sec:CG}
+	
+	The method assumes that near a local minimum, the potential energy surface $f(\mathbf{x})$ can be approximated by a quadratic expansion
+	\begin{equation}
+		f(\mathbf{x}) \approx c - \mathbf{b} \cdot \mathbf{x} + \frac{1}{2} \mathbf{x} \cdot \mathbf{A} \cdot \mathbf{x}
+	\end{equation}
+	where $\mathbf{A}$ is the Hessian matrix of second derivatives. The algorithm iteratively updates the system configuration by performing a line minimization along a search direction $\mathbf{h}_i$. The search direction, which is defined as a linear combination of the current gradient $\mathbf{g}_{i+1}$ and the previous search direction $\mathbf{h}_i$
+	\begin{equation}
+		\mathbf{h}_{i+1} = \mathbf{g}_{i+1} + \gamma_i \mathbf{h}_i
+	\end{equation}
+	This implementation utilizes the Polak-Ribi\`{e}re variant, in which the scalar $\gamma_i$ is computed as
+	\begin{equation}
+		\gamma_{i} = \frac{(\mathbf{g}_{i+1} - \mathbf{g}_{i}) \cdot \mathbf{g}_{i+1}}{\mathbf{g}_{i} \cdot \mathbf{g}_{i}}
+	\end{equation}
+	where $\mathbf{g}_i$ and $\mathbf{g}_{i+1}$ are the gradient vectors at the current and next iteration, respectively.
+	
+	The algorithm iterates until the maximum force component acting on any particle falls below a convergence tolerance (e.g., $10^{-4}$ reduced units).
+	
+	\newpage
+	
+	\section{The Box-Muller transform}\label{sec:Box-Muller}
+	
+	In molecular dynamics, the initialization of particle velocities at a finite temperature $T$ requires sampling from the Maxwell distribution. This is mathematically equivalent to generating random numbers from a normal distribution. Since standard pseudorandom number generators typically provide values uniformly distributed on the interval $(0, 1)$, a transformation method is required to map these uniform numbers onto the target distribution.
+	
+	A random number $\zeta'$ chosen from a distribution with mean $\mu$ and variance $\sigma$ is related to a number $\zeta$ generated from the normal distribution with zero mean and unit variance by
+	\begin{equation}
+		\zeta' = \mu + \sigma \, \zeta.
+	\end{equation}
+	The problem is reduced to sampling $\zeta$. One way (of many) to do this is the Box-Muller transform, which involves two steps and the generation of two uniform random numbers \cite{box1958}:
+	\begin{enumerate}
+		\item[(a)] generate independent uniform random numbers $\xi_1$ and $\xi_2$ on $(0, 1)$;
+		\item[(b)] calculate $\zeta_1 = \sqrt{-2 \ln \xi_1} \cos \left(2\pi\xi_2\right)$ and $\zeta_2 = \sqrt{-2 \ln \xi_1} \sin \left(2\pi\xi_2\right)$
+	\end{enumerate}
+	To obtain velocity components $v_{\alpha}$ with the correct physical variance $\sigma_v^2 = k_B T / m$, the standard variate must be scaled by the thermal velocity $\sigma_v$.
+	
+	Although the transform yields two independent normal numbers, for reasons of algorithmic simplicity, the implementation presented in the \texttt{velocity\_init\_module} utilizes only $\zeta_1$ (the cosine term) to determine each velocity component. The final expression implemented is therefore:
+	\begin{equation}
+		v_{\alpha} = \mu + \sigma_v \, \zeta_1 = 0 + \sqrt{\frac{k_B T}{m}} \left( \sqrt{-2 \ln \xi_1} \cos(2\pi \xi_2) \right)
+	\end{equation}
+	This derivation corresponds exactly to the implementation presented in the \texttt{velocity\_init\_module}.
+
+	\newpage
+	
+	\begin{thebibliography}{9}
+		
+		\bibitem{zwanzig1961}
+		Zwanzig, R. Phys. Rev. 1961, 124, 983–992.
+		
+		\bibitem{swope1982}
+		Swope, W. C.; Andersen, H. C.; Berens, P. H.; Wilson, K. R. J. Chem. Phys. 1982, 76, 637–649.
+		
+		\bibitem{box1958}
+		Box, G. E. P.; Muller, M. E. Ann. Math. Stat. 1958, 29, 610–611.
+		
+		\bibitem{jorgensen_combined}
+		Jorgensen, W. L.; Maxwell, D. S.; Tirado-Rives, J. J. Am. Chem. Soc. 1996, 118, 11225–11236; \\
+		Jorgensen, W. L.; Chandrasekhar, J.; Madura, J. D.; Impey, R. W.; Klein, M. L. J. Chem. Phys. 1983, 79, 926–935.
+		
+		\bibitem{packmol}
+		Martinez, L.; Andrade, R.; Birgin, E. G.; Martinez, J. M. J. Comput. Chem. 2009, 30, 2157–2164.
+		
+	\end{thebibliography}
+	
+	
+\end{document}
