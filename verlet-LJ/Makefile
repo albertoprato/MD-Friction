@@ -5,7 +5,7 @@ EXEC = simulation
 FC = gfortran
 
 # Compilation flags
-# -I. is needed to search for .mod files in the current directory
+# -I. searches for .mod files in the current directory
 FFLAGS = -O2 -Wall -I. -I/usr/local/include
 
 # Linker flags (FFTW3 library and Math library)
@@ -28,7 +28,7 @@ all: $(EXEC)
 
 # Final Link (Create executable)
 $(EXEC): $(OBJ)
-  $(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Generic compilation of object files
 %.o: %.f90
@@ -47,8 +47,8 @@ force_module.o: force_module.f90 kinds.o
 # FFT module (depends on kinds)
 fft_correlation_module.o: fft_correlation_module.f90 kinds.o
 
-# Velocity inizialitation module (depends on kinds)
-velocity_init_module.o: kinds.o
+# Velocity initialization module (depends on kinds)
+velocity_init_module.o: velocity_init_module.f90 kinds.o
 
 # Optimization module (depends on kinds and force)
 minimization_module.o: minimization_module.f90 force_module.o kinds.o
@@ -62,5 +62,3 @@ main.o: main.f90 force_module.o velocity_init_module.o minimization_module.o fri
 # Cleaning rule
 clean:
 	rm -f *.o *.mod $(EXEC)
-
-.PHONY: all clean
