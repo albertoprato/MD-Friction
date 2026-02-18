@@ -51,8 +51,8 @@ MODULE friction_module
       WRITE(30, '(3(A,I1), A)', ADVANCE='NO') &
              "  Sol ", I_sol, "_X    Sol", I_sol, "_Y    Sol", I_sol, "_Z "
     END DO
-    WRITE(30, *) ""
-          
+    WRITE(30, *) ""      
+
     ! Create an array to store the diagonal components      
     ALLOCATE(final_results(n_steps, 12))
   
@@ -83,7 +83,7 @@ MODULE friction_module
       time_val = t_lag * dt
       
       WRITE(30, '(F10.4, 2X)', ADVANCE='NO') time_val
-      DO idx = 1, 12
+      DO idx = 1, 9
         WRITE(30, '(ES14.6, 1X)', ADVANCE='NO') final_results(step, idx)
       END DO
       WRITE(30, *) ""

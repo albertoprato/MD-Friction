@@ -109,7 +109,7 @@
 	This expression represents the time-autocorrelation function of the fluctuating part of the interaction force, averaged over the equilibrium canonical distribution of the bath, under the condition of steady solute on configuration $\mathbf{R}$. Equation (\ref{eqn:friction}) constitutes the theoretical core of this work. The temporal decay of this memory kernel characterizes the non-Markovian nature of the bath; a rapid decay implies a separation of time scales compatible with a Markovian approximation.
 	
 	\subsection{Time evolution implementation}\label{sec:time-evolution}
-
+	
 	As indicated by equation (\ref{eqn:friction}), computing the friction tensor requires sampling the stochastic force history exerted by the bath on a static solute. Consequently, the simulation strategy involves integrating the classical equations of motion for the solvent particles while keeping the solute degrees of freedom frozen.
 	
 	The interaction terms $u_{\rm B}(\mathbf{r})$ and $u_{\rm int}(\mathbf{R},\mathbf{r})$ in the Hamiltonian (\ref{eq:hamiltonian}) are modeled via the Lennard-Jones (12-6) potential. The general form for the pairwise interaction energy is
@@ -133,16 +133,16 @@
 	\end{align}
 	this corresponds to a ``half-kick, drift, half-kick'' scheme: velocities are advanced by a half-step using the current forces, positions are drifted using the updated half-step velocities, forces are re-evaluated at the new positions, and finally, velocities are fully advanced. This scheme translates directly into a Fortran implementation:
 	\begin{lstlisting}[language=Fortran]
-	! Force evaluation at t
-	CALL force_calculation(...)
-	! Half-kick
-	vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
-	! Drift
-	pos_solv = pos_solv + dt * vel_solv
-	! Force evaluation at t + dt
-	CALL force_calculation(...)
-	! Half-kick
-	vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)\end{lstlisting}
+		! Force evaluation at t
+		CALL force_calculation(...)
+		! Half-kick
+		vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
+		! Drift
+		pos_solv = pos_solv + dt * vel_solv
+		! Force evaluation at t + dt
+		CALL force_calculation(...)
+		! Half-kick
+		vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)\end{lstlisting}
 	in this snippet, \texttt{pos\_solv}, \texttt{vel\_solv}, and \texttt{force} are $(N,3)$ arrays representing the phase space coordinates and forces of the solvent particles.
 	
 	\newpage
@@ -163,7 +163,7 @@
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.4\textwidth]{../../Downloads/Flowchart}
+		\includegraphics[width=0.4\textwidth]{C:/Users/alber/Downloads/Flowchart}
 		\caption{Flowchart of the MD simulation workflow.}
 		\label{fig:flowchart}
 	\end{figure}
@@ -194,15 +194,15 @@
 	
 	The numerical evaluation of the potential energy and forces requires a summation over particle pairs. To optimize efficiency, the algorithm exploits Newton's third law, which allows the summation to be restricted to unique pairs $(i, j)$ where $i < j$. This reduces the number of force evaluations by a factor of two. The resulting nested loop structure is illustrated below:
 	\begin{lstlisting}[language=Fortran]
-	! Loop over the particle i
-	DO i = 1, n_solv - 1
-	  ! Loop over the particle k (unique pairs only)
-	  DO k = i + 1, n_solv
-        ...
-        ! Evaluate forces and potential
-        ...
-	  END DO
-	END DO \end{lstlisting}
+		! Loop over the particle i
+		DO i = 1, n_solv - 1
+		! Loop over the particle k (unique pairs only)
+		DO k = i + 1, n_solv
+		...
+		! Evaluate forces and potential
+		...
+		END DO
+		END DO \end{lstlisting}
 	
 	\subsection{Initial energy minimization: \texttt{minimization\_module}}
 	
@@ -220,19 +220,19 @@
 	\end{equation}
 	This distribution is characterized by a zero mean and a standard deviation of $\sigma = \sqrt{k_B T / m}$. To generate numerical values adhering to this distribution, the module employs the Box-Muller transform, an algorithm that maps uniformly distributed random numbers, $\xi \in (0, 1)$, onto the normal distribution. Some details of this transformation are provided in Appendix \ref{sec:Box-Muller}. The implementation of the random assignment is shown below:
 	\begin{lstlisting}[language=Fortran]
-	sigma_v = SQRT((kb * temp) / mass)    ! Standard deviation
-	CALL RANDOM_SEED()
-	
-	DO i = 1, n_solv
-	  DO k = 1, 3
-	    CALL RANDOM_NUMBER(r1)    ! Generates uniform number in (0,1)
-	    CALL RANDOM_NUMBER(r2)    ! Generates uniform number in (0,1)
-	    
-	    ! Gaussian number with mean 0 and std.dev. = sigma_v
-	    vel_solv(i, k) = sigma_v * SQRT(-2.0_wp * LOG(r1)) & 
-	                     * COS(2.0_wp * pi * r2)
-	  END DO
-	END DO \end{lstlisting}
+		sigma_v = SQRT((kb * temp) / mass)    ! Standard deviation
+		CALL RANDOM_SEED()
+		
+		DO i = 1, n_solv
+		DO k = 1, 3
+		CALL RANDOM_NUMBER(r1)    ! Generates uniform number in (0,1)
+		CALL RANDOM_NUMBER(r2)    ! Generates uniform number in (0,1)
+		
+		! Gaussian number with mean 0 and std.dev. = sigma_v
+		vel_solv(i, k) = sigma_v * SQRT(-2.0_wp * LOG(r1)) & 
+		* COS(2.0_wp * pi * r2)
+		END DO
+		END DO \end{lstlisting}
 	
 	\subsubsection{Inertial frame correction and temperature rescaling}
 	
@@ -256,15 +256,15 @@
 		
 		To further demonstrate the readability and clarity of the Fortran code, the implementation of the MSD calculation is shown below:
 		\begin{lstlisting}[language=Fortran]
-	msd = 0.0_wp
-	DO i = 1, n_solv
-	  dist_sq = 0.0_wp
-	  DO k = 1, 3
-	    dist_sq = dist_sq + (pos_solv(i, k) - pos_solv0(i, k))**2
-	  END DO
-	  msd = msd + dist_sq
-	END DO
-	msd = msd / DBLE(n_solv) \end{lstlisting}
+			msd = 0.0_wp
+			DO i = 1, n_solv
+			dist_sq = 0.0_wp
+			DO k = 1, 3
+			dist_sq = dist_sq + (pos_solv(i, k) - pos_solv0(i, k))**2
+			END DO
+			msd = msd + dist_sq
+			END DO
+			msd = msd / DBLE(n_solv) \end{lstlisting}
 	\end{enumerate}
 	
 	During the equilibration phase, the time evolution of these quantities is saved to \texttt{equilibration\_stats.dat} to verify that the relaxation time is sufficient. The plots of these parameters are presented in Section \ref{sec:equilibration}.
@@ -296,131 +296,57 @@
 	where $\delta \hat{F}(\omega) = \mathcal{F}[\delta F(t)]$ is the discrete Fourier transform of the fluctuating force component. By utilizing the fast Fourier transform (FFT) algorithm the complexity is reduced to $\mathcal{O}(N \log_2 N)$.
 	
 	\subsubsection{Implementation with FFTW library}
-
+	
 	The \texttt{fft\_correlation\_module} utilizes the FFTW3 (\textit{Fastest Fourier Transform in the West}) library to perform the forward and backward transforms. The core Fortran implementation, capable of computing both auto- ($\alpha=\beta$) and cross-correlations ($\alpha \neq \beta$), is shown below:
 	\begin{lstlisting}[language=Fortran]
-	! Calculate fluctuations from input arrays x and y
-	mean_x = SUM(x) / DBLE(N)
-	mean_y = SUM(y) / DBLE(N)
-	
-	! Copy real values into complex vector
-	DO i = 1, N
-	  signal_x(i) = CMPLX(x(i)- mean_x, 0.0_wp, KIND=C_DOUBLE_COMPLEX) 
-	  signal_y(i) = CMPLX(y(i)- mean_y, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
-	END DO
-	
-	! Forward FFT (from time to frequency)
-	CALL fftw_execute_dft(plan_fwd_x, signal_x, fft_x)
-	CALL fftw_execute_dft(plan_fwd_y, signal_y, fft_y)
-	
-	! Compute power spectrum ( |F(w)|^2 )
-	DO i = 1, N_pad    !N_pad = 2 * N (required for linear correlation)
-	  power_spectrum(i) = CONJG(fft_x(i)) * fft_y(i)
-	END DO
-	
-	! Backward FFT (from frequency to time)
-	CALL fftw_execute_dft(plan_bwd, power_spectrum, result_complex)\end{lstlisting}
+		! Calculate fluctuations from input arrays x and y
+		mean_x = SUM(x) / DBLE(N)
+		mean_y = SUM(y) / DBLE(N)
+		
+		! Copy real values into complex vector
+		DO i = 1, N
+		signal_x(i) = CMPLX(x(i)- mean_x, 0.0_wp, KIND=C_DOUBLE_COMPLEX) 
+		signal_y(i) = CMPLX(y(i)- mean_y, 0.0_wp, KIND=C_DOUBLE_COMPLEX)
+		END DO
+		
+		! Forward FFT (from time to frequency)
+		CALL fftw_execute_dft(plan_fwd_x, signal_x, fft_x)
+		CALL fftw_execute_dft(plan_fwd_y, signal_y, fft_y)
+		
+		! Compute power spectrum ( |F(w)|^2 )
+		DO i = 1, N_pad    !N_pad = 2 * N (required for linear correlation)
+		power_spectrum(i) = CONJG(fft_x(i)) * fft_y(i)
+		END DO
+		
+		! Backward FFT (from frequency to time)
+		CALL fftw_execute_dft(plan_bwd, power_spectrum, result_complex)\end{lstlisting}
 	
 	\subsection{Friction tensor computation: (\texttt{friction\_module})}\label{sec:friction-tensor}
-		
+	
 	The final stage of the program is managed by the \texttt{friction\_module}. This unit allows the calculation of the friction tensor elements $\xi_{ij}^{\alpha \beta}(t)$ by invoking the FFT routine. 
 	
 	In the current version available in the repository, the implementation is explicitly restricted to the computation of the diagonal elements, $\xi_{ii}^{\alpha \alpha}(t)$. This choice was made to minimize memory consumption and focuses the analysis on the self-friction coefficients experienced by the four solute particles.
 	
 	However, the code allows for a straightforward extension to the full tensor, which would capture both spatial cross-correlations ($\alpha \neq \beta$) and coupling between distinct particles ($i \neq j$). The generalized algorithm required to compute the complete tensor consists of a quadruply nested loop structure, as demonstrated below:
 	\begin{lstlisting}[language=Fortran] 
-	DO I = 1, n_solute 
-	  DO a = 1, 3
-	    ! Extract force history for solute particle I
-	    force_traj_A = force_history(I, a, :)
-	      
-	    DO J = 1, n_solute
-	      DO b = 1, 3
-	        ! Extract force history for solute particle J
-	        force_traj_B = force_history(J, b,  :)
-	    
-	        ! Compute Correlation via FFT
-	        CALL compute_correlation_fft(force_traj_A, force_traj_B, &
-	                                   tensor_element)
-	      END DO
-	    END DO
-	  END DO
-	END DO \end{lstlisting}
+		DO I = 1, n_solute 
+		DO a = 1, 3
+		! Extract force history for solute particle I
+		force_traj_A = force_history(I, a, :)
+		
+		DO J = 1, n_solute
+		DO b = 1, 3
+		! Extract force history for solute particle J
+		force_traj_B = force_history(J, b,  :)
+		
+		! Compute Correlation via FFT
+		CALL compute_correlation_fft(force_traj_A, force_traj_B, &
+		tensor_element)
+		END DO
+		END DO
+		END DO
+		END DO \end{lstlisting}
 	in this snippet, \texttt{force\_history} is a three-dimensional array containing the complete time series of the forces exerted on the solute. The three indices correspond to the solute particle ($1,2,3,4$), the Cartesian dimension ($x, y, z$), and the time step, respectively.
-	
-	\newpage
-	
-	\section{Results and Discussion}
-	
-	To validate the computational implementation and demonstrate the capabilities of the code, a simulation was performed on a representative sand-box.
-	
-	\subsection{Simulation setup and parameters}
-	
-	The illustrative test case consists of a solution of 4 massive solute particles (modeled as carbon atoms) embedded in a bath of 11.452 solvent particles (modeled as water). The initial configuration was generated using the \texttt{Packmol} software \cite{packmol}, which distributed the molecules within a cubic simulation box of side length $L = 20.0$ \AA.
-	
-	To emulate a realistic chemical environment, the Lennard-Jones interaction parameters were adapted from the standard OPLS-AA (for solute) and TIP3P (for solvent) force fields as reported by Jorgensen \textit{et al.} \cite{jorgensen_combined}. The simulation employs a consistent system of units: distances in Ångströms, time in picoseconds, mass in Daltons, and temperature in Kelvin. The specific simulation parameters provided in the \texttt{input.txt} file are listed below:
-	\begin{lstlisting}[language=Fortran]
-	50000 0.001              ! nk, dt (ps)
-	18.015 63.597 3.1507     ! Solvent: m (Dalton), epsilon_OO, sigma_OO
-	43.472 3.338             ! Solute: epsilon_CO, sigma_CO (angstrom)
-	298.15 0.831             ! Temperature (K), Boltzmann const
-	70.0                     ! L_box used in packmol \end{lstlisting}
-	
-	The system dynamics were propagated for a total duration of $50$ ps, discretized into $50.000$ time steps of $\delta t = 0.001$ ps.
-	
-	\subsection{Equilibration analysis}\label{sec:equilibration}
-	
-	The first phase of the analysis concerns the equilibration of the system. As shown in Figure \ref{fig:equilibration}, the transition from the static, energy-minimized initial condition to a dynamic liquid state is monitored via the total potential energy and the MSD.
-	
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=0.6\textwidth]{../Tesi/Friction-Tensor/Molecular-Dynamics/LJ-2/11452/equilibration}
-		\caption{Time evolution of system properties during the initial equilibration phase.}
-		\label{fig:equilibration}
-	\end{figure}
-	
-	The upper panel of Fig. \ref{fig:equilibration} illustrates the rapid thermalization of the system. The potential energy rises sharply from the deep minimum of the optimized packing and stabilizes around a stationary mean value within the first few fractions of a picosecond. This indicates that the system has successfully escaped the initial energy minimum. Simultaneously, the bottom panel shows that the MSD exhibits an immediate linear time-dependence, characteristic of the diffusive regime of a liquid, confirming that no lattice-like memory of the initial Packmol configuration remains.
-	
-	\subsection{Friction tensor analysis}
-	
-	The molecular dynamics trajectory was analyzed to compute the time-dependent friction tensor. As detailed in Section \ref{sec:friction-tensor}, the current implementation focuses on the diagonal elements of the tensor, $\xi_{ii}^{\alpha \alpha}(t)$.
-	
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=0.8\textwidth]{../Tesi/Friction-Tensor/Molecular-Dynamics/LJ-2/11452/friction-diagonal}
-		\caption{Time-dependent memory kernel $\tilde{\xi}(t)$ (diagonal components).}
-		\label{fig:friction-diagonal}
-	\end{figure}
-	
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=0.8\textwidth]{../Tesi/Friction-Tensor/Molecular-Dynamics/LJ-2/11452/friction-diagonal-zoom}
-		\caption{Short-time behavior of the memory kernel $\tilde{\xi}(t)$ (0 - 3 ps).}
-		\label{fig:friction-diagonal-zoom}
-	\end{figure}
-	
-	Fig. \ref{fig:friction-diagonal} displays the time evolution of the friction kernel for the four solute particles. To resolve the relevant timescales of the solvent-solute coupling, the analysis focuses on the short-time behavior shown in Fig. \ref{fig:friction-diagonal-zoom}. The memory kernel is characterized by a large initial value at $t=0$. This is followed by a rapid decay occurring within a characteristic timescale of $0.1 - 0.2$ ps. The rapid loss of correlation suggests that for phenomena occurring on timescales $t \gg 0.5$ ps, memory effects become negligible, and the dynamics can be effectively described within the Markovian approximation.
-	
-	\subsection{Conclusions}
-	
-	The computational framework presented herein establishes a valid alternative to hydrodynamic models for the evaluation of the friction tensor. While standard hydrodynamic approaches rely on the hydrodynamic radius, which is a phenomenological parameter that can become ill-defined or physically misleading, the present method computes dissipation directly from microscopic forces.
-	
-	Despite the successful validation of the current implementation, future development will extend the program's capabilities in two key aspects:
-	\begin{enumerate}
-		\item Systematically varying the solute geometry to map the friction tensor $\tilde{\bm{\xi}}(\mathbf{R}, t)$ across the conformational landscape.
-		\item Implementing the transformation to project the Cartesian friction tensor onto internal coordinates.
-	\end{enumerate}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	\clearpage
 	\newpage
@@ -542,14 +468,14 @@
 	
 	In the Fortran implementation, the periodic boundaries and minimum image distances are handled using the nearest integer function \texttt{ANINT}. To maintain coordinates within the central box (assuming the origin is at the center), particle positions are re-mapped whenever they drift across a boundary:
 	\begin{lstlisting}[language=Fortran]
-	pos_solv(i, 1) = pos_solv(i, 1) - &
-	                 box_L * ANINT(pos_solv(i, 1) / box_L)\end{lstlisting}
+		pos_solv(i, 1) = pos_solv(i, 1) - &
+		box_L * ANINT(pos_solv(i, 1) / box_L)\end{lstlisting}
 	where the first index of \texttt{pos\_solv(:,:)} select the $i$-th solvent particle and the second index the dimension. Here \texttt{box\_L} is a variable containing the cubic box length $L$. 
 	
 	Most critically, the distance vector $\mathbf{r}_{ij}$ must represent the shortest path between particles through the periodic lattice. This is calculated by applying the same wrapping logic to the distance vector:
 	\begin{lstlisting}[language=Fortran]
-	diff(dim) = pos(j, dim) - pos(i, dim)
-	diff(dim) = diff(dim) - box_L * ANINT(diff(dim) / box_L)\end{lstlisting}
+		diff(dim) = pos(j, dim) - pos(i, dim)
+		diff(dim) = diff(dim) - box_L * ANINT(diff(dim) / box_L)\end{lstlisting}
 	This operation ensures that \texttt{diff(dim)} correctly represents the component of the distance vector between particle $i$ and the closest image of particle $j$.
 	
 	\newpage
@@ -594,7 +520,7 @@
 		v_{\alpha} = \mu + \sigma_v \, \zeta_1 = 0 + \sqrt{\frac{k_B T}{m}} \left( \sqrt{-2 \ln \xi_1} \cos(2\pi \xi_2) \right)
 	\end{equation}
 	This derivation corresponds exactly to the implementation presented in the \texttt{velocity\_init\_module}.
-
+	
 	\newpage
 	
 	\begin{thebibliography}{9}
@@ -616,6 +542,6 @@
 		Martinez, L.; Andrade, R.; Birgin, E. G.; Martinez, J. M. J. Comput. Chem. 2009, 30, 2157–2164.
 		
 	\end{thebibliography}
+
 	
-	
-\end{document}
+	\end{document}

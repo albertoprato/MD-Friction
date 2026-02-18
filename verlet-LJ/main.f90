@@ -49,7 +49,7 @@ PROGRAM main
   REAL (KIND=wp), DIMENSION(:,:,:), ALLOCATABLE :: force_history                ! (4, 3, Steps)
   REAL(KIND=wp), DIMENSION(4, 3) :: pos_solute, force_solute 
   
-  REAL(KIND=wp) :: e_pot
+  REAL(KIND=wp) :: kin_en, e_pot, e_tot
   CHARACTER(LEN=2) :: atom_label  
   REAL(KIND=wp) :: inp_x, inp_y, inp_z
   
@@ -195,6 +195,9 @@ PROGRAM main
 
   PRINT *, "Starting Molecular Dynamics..."
 
+  OPEN(UNIT=50, FILE='energy.dat', STATUS='replace')
+  WRITE(50, '(A)') "# Time(ps)       E_Kin          E_Pot          E_Tot"
+
   ! Calculate the forces at t = 0
   CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot) 
@@ -212,6 +215,8 @@ PROGRAM main
 
   ! Verlet Algorithm 
   DO step = 1, nk
+    
+    time_val = DBLE(step) * dt
 
     ! Half-kick
     vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
@@ -238,6 +243,22 @@ PROGRAM main
     ! Half-kick
     vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
   
+
+    kin_en = 0.0_wp
+    DO i = 1, n_solv
+      kin_en = kin_en + SUM(vel_solv(i, :)**2)
+    END DO
+    kin_en = 0.5_wp * mass_solv * kin_en
+     
+    ! Energia Totale
+    e_tot = kin_en + e_pot
+
+    ! Salvataggio su file (ogni 10 step per non creare file enormi)
+    IF (MOD(step, 10) == 0) THEN
+      WRITE(50, '(F12.4, 3(2X, ES14.6))') time_val, kin_en, e_pot, e_tot
+    END IF
+
+
     ! Output Results (e.g. every 100 steps)
     IF (MOD(step, 100) == 0) THEN
       
