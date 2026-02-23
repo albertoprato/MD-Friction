@@ -22,7 +22,7 @@ MODULE friction_module
 
   CONTAINS
 
-  SUBROUTINE friction_tensor(n_steps, force_hist, dt)
+  SUBROUTINE friction_tensor(n_steps, force_hist, dt, temp, kb)
 
     INTEGER, INTENT(IN) :: n_steps
     REAL (KIND=wp), DIMENSION(4, 3, n_steps), INTENT(IN) :: force_hist
@@ -36,6 +36,7 @@ MODULE friction_module
     INTEGER :: a, I_sol, J_sol, t_lag, step, idx
     INTEGER(c_int) :: N_c
     REAL (KIND=wp) :: time_val
+    REAL (KIND=wp) :: temp, kb    
 
     ! Allocate 1D array for FFT
     ALLOCATE(vec_i(n_steps), vec_j(n_steps))
@@ -72,7 +73,7 @@ MODULE friction_module
         CALL compute_correlation_fft(N_c, vec_i, vec_i, corr_result)
 
         ! Save results
-        final_results(:, idx) = corr_result(:)
+        final_results(:, idx) = corr_result(:) / (temp * kb)
     
       END DO
     END DO
@@ -83,7 +84,7 @@ MODULE friction_module
       time_val = t_lag * dt
       
       WRITE(30, '(F10.4, 2X)', ADVANCE='NO') time_val
-      DO idx = 1, 9
+      DO idx = 1, 12
         WRITE(30, '(ES14.6, 1X)', ADVANCE='NO') final_results(step, idx)
       END DO
       WRITE(30, *) ""

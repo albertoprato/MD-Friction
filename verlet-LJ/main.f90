@@ -52,14 +52,10 @@ PROGRAM main
   REAL(KIND=wp) :: kin_en, e_pot, e_tot
   CHARACTER(LEN=2) :: atom_label  
   REAL(KIND=wp) :: inp_x, inp_y, inp_z
-  
+  REAL(KIND=wp) :: current_temp, lambda, tau_T 
   REAL(KIND=wp) :: box_L, inv_box
-
-  ! Variables for mean squared displacement during Equilibration
-  REAL(KIND=wp), DIMENSION(:,:), ALLOCATABLE :: pos_solv0
-  REAL(KIND=wp) :: msd, dist_sq_diff, time_val
-  INTEGER :: k
-
+  REAL(KIND=wp) :: time_val
+ 
   ! Read Input
   OPEN(UNIT=10, FILE='input/input.txt', STATUS='old')
   
@@ -128,7 +124,6 @@ PROGRAM main
   CALL conjugate_gradient_minimize(n_solv, pos_solv, pos_solute, &
                                    epsilon_ss, sigma_ss, epsilon_int, sigma_int, &
                                    box_L, 1.0d-3, 2000)
-  
   PRINT *, "Optimization Completed."
   PRINT *, ""  
  
@@ -141,18 +136,15 @@ PROGRAM main
   
   PRINT *, "Starting Equilibration..."
   
-  ! Allocation of array for initial positions 
-  ALLOCATE(pos_solv0(n_solv, 3))
-
-  ! "Crystalline" positions at t = 0
-  pos_solv0 = pos_solv
-
   OPEN(UNIT=40, FILE='equilibration_stats.dat', STATUS='replace')
-  WRITE(40, '(A)') "# Time       E_pot        MSD"
+  WRITE(40, '(A)') "# Time       E_pot"
  
   ! Calculation of the initial forces post-optimization
   CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
+
+  ! Coupling constant
+  tau_T = 0.1_wp  
 
   DO step = 1, 10000
     time_val = DBLE(step) * dt   
@@ -163,6 +155,12 @@ PROGRAM main
     ! Drift
     pos_solv = pos_solv + dt * vel_solv
     
+    DO i = 1, n_solv
+      pos_solv(i, 1) = pos_solv(i, 1) - box_L * ANINT(pos_solv(i, 1) * inv_box)
+      pos_solv(i, 2) = pos_solv(i, 2) - box_L * ANINT(pos_solv(i, 2) * inv_box)
+      pos_solv(i, 3) = pos_solv(i, 3) - box_L * ANINT(pos_solv(i, 3) * inv_box)
+    END DO
+
     ! New Forces
     CALL force_calculation(n_solv, pos_solv, pos_solute, force, force_solute, &
                             epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
@@ -170,25 +168,30 @@ PROGRAM main
     ! Half-kick
     vel_solv = vel_solv + 0.5_wp * dt * (force / mass_solv)
     
-    ! Calculation of MSD
-    msd = 0.0_wp
+    ! Berendsen thermostat (only during equilibration)
+    ! Current kinetic energy
+    kin_en = 0.0_wp
     DO i = 1, n_solv
-      dist_sq_diff = 0.0_wp
-      DO k = 1, 3
-        dist_sq_diff = dist_sq_diff + (pos_solv(i, k) - pos_solv0(i, k))**2
-      END DO
-      msd = msd + dist_sq_diff
+      kin_en = kin_en + SUM(vel_solv(i, :)**2)
     END DO
-    msd = msd / DBLE(n_solv)
+    kin_en = 0.5_wp * mass_solv * kin_en
 
-    IF (MOD(step, 10) == 0) THEN
-      WRITE(40, '(F12.4, 2X, ES14.6, 2X, ES14.6)') time_val, e_pot, msd
+    ! Current temperature
+    current_temp = (2.0_wp * kin_en) / (3.0_wp * DBLE(n_solv - 1) * k_boltz)
+    
+    ! Berendsen scaling factor
+    lambda = SQRT(1.0_wp + (dt / tau_T) * ((temp / current_temp) - 1.0_wp))
+    
+    ! Scale velocities
+    vel_solv = vel_solv * lambda
+
+    IF (MOD(step, 1000) == 0) THEN
+      WRITE(40, '(F12.4, 2X, ES14.6, 2X)') time_val, e_pot
     END IF
     
   END DO
   
   CLOSE(40)
-  DEALLOCATE(pos_solv0)
  
   PRINT *, "Equilibration completed. Stats saved in equilibration_stats.dat"
   PRINT *, ""
@@ -288,7 +291,7 @@ PROGRAM main
   PRINT *, "Computing friction tensor..."
 
   ! Calculate Friction Tensor
-  CALL friction_tensor(nk, force_history, dt)
+  CALL friction_tensor(nk, force_history, dt, temp, k_boltz)
 
   DEALLOCATE(pos_solv, vel_solv, force, traj_history, force_history)
 

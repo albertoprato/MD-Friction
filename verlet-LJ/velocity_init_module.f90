@@ -48,9 +48,12 @@ MODULE velocity_init_module
     ! Assign random velocities (Box-Muller transform)
     DO i = 1, n_solv
       DO k = 1, 3
-        CALL RANDOM_NUMBER(r1)    ! Generates a uniform number between 0 and 1
-        CALL RANDOM_NUMBER(r2)    ! Generates a uniform number between 0 and 1
-          
+        r1 = 0.0_wp
+        DO WHILE (r1 == 0.0_wp)
+          CALL RANDOM_NUMBER(r1)
+        END DO
+        CALL RANDOM_NUMBER(r2)
+  
         ! Gaussian number with mean 0 and std dev sigma_v
         vel_solv(i, k) = sigma_v * SQRT(-2.0_wp * LOG(r1)) * COS(2.0_wp * pi * r2)
       END DO
