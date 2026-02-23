@@ -144,9 +144,9 @@ PROGRAM main
                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
 
   ! Coupling constant
-  tau_T = 0.1_wp  
+  tau_T = 1.0_wp  
 
-  DO step = 1, 10000
+  DO step = 1, 5000
     time_val = DBLE(step) * dt   
     
     ! Half-kick
@@ -185,7 +185,7 @@ PROGRAM main
     ! Scale velocities
     vel_solv = vel_solv * lambda
 
-    IF (MOD(step, 1000) == 0) THEN
+    IF (MOD(step, 10) == 0) THEN
       WRITE(40, '(F12.4, 2X, ES14.6, 2X)') time_val, e_pot
     END IF
     

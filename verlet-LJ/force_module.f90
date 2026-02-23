@@ -47,12 +47,13 @@ MODULE force_module
       
       ! Local Variables
       INTEGER :: i, k, dim, I_solute  
-      REAL (KIND=wp) :: dist_sq, dist, r_inv, r2_inv, r6_inv, r12_inv
+      REAL (KIND=wp) :: dist_sq, r2_inv, r6_inv, r12_inv
       REAL (KIND=wp) :: diff(3)
       REAL (KIND=wp) :: sigma6, sigma12
       REAL (KIND=wp) :: e_lj, f_lj_factor
       REAL (KIND=wp) :: inv_box, r_cut_sq, half_box 
       REAL(KIND=wp), PARAMETER :: r_cut = 12.0_wp   ! Cutoff
+      REAL(KIND=wp) :: e_shift_ss, e_shift_int
 
       forces_solv = 0.0_wp
       forces_solute = 0.0_wp
@@ -75,7 +76,8 @@ MODULE force_module
 
       sigma6 = sigma_ss**6
       sigma12 = sigma6**2
-      
+      e_shift_ss = 4.0_wp * epsilon_ss * (sigma12 / (r_cut_sq**6) - sigma6 / (r_cut_sq**3))
+ 
       DO i = 1, n_solv - 1
         DO k = i + 1, n_solv
           
@@ -91,13 +93,12 @@ MODULE force_module
           
           IF (dist_sq > 1.0e-10_wp .AND. dist_sq < r_cut_sq) THEN
             
-            r_inv = 1.0_wp / dist
             r2_inv = 1.0_wp / dist_sq
             r6_inv = r2_inv**3
             r12_inv = r6_inv**2
             
             ! Potential energy
-            e_lj = 4.0_wp * epsilon_ss * (sigma12 * r12_inv - sigma6 * r6_inv)
+            e_lj = 4.0_wp * epsilon_ss * (sigma12 * r12_inv - sigma6 * r6_inv) - e_shift_ss
             epot = epot + e_lj
             
             ! Force 
@@ -119,6 +120,7 @@ MODULE force_module
       
       sigma6 = sigma_int**6
       sigma12 = sigma6**2
+      e_shift_int = 4.0_wp * epsilon_int * (sigma12 / (r_cut_sq**6) - sigma6 / (r_cut_sq**3))
 
       DO i = 1, n_solv
         DO I_solute = 1, 4
@@ -134,12 +136,11 @@ MODULE force_module
           
           IF (dist_sq > 1.0e-10_wp .AND. dist_sq < r_cut_sq) THEN
             
-            r_inv = 1.0_wp / dist
             r2_inv = 1.0_wp / dist_sq
             r6_inv = r2_inv**3
             r12_inv = r6_inv**2
             
-            e_lj = 4.0_wp * epsilon_int * (sigma12 * r12_inv - sigma6 * r6_inv)
+            e_lj = 4.0_wp * epsilon_int * (sigma12 * r12_inv - sigma6 * r6_inv) - e_shift_int
             epot = epot + e_lj
             
             f_lj_factor = 24.0_wp * epsilon_int * r2_inv * (2.0_wp * sigma12 * r12_inv - sigma6 * r6_inv)
