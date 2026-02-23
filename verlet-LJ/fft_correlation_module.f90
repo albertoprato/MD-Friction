@@ -62,9 +62,9 @@ CONTAINS
     ! From N+1 to N_pad there are zeros
 
     ! Creation Plans FFTW
-    plan_fwd_x = fftw_plan_dft_1d(N, signal_x, fft_x, FFTW_FORWARD, FFTW_ESTIMATE)
-    plan_fwd_y = fftw_plan_dft_1d(N, signal_y, fft_y, FFTW_FORWARD, FFTW_ESTIMATE)
-    plan_bwd   = fftw_plan_dft_1d(N, power_spectrum, result_complex, FFTW_BACKWARD, FFTW_ESTIMATE)
+    plan_fwd_x = fftw_plan_dft_1d(N_pad, signal_x, fft_x, FFTW_FORWARD, FFTW_ESTIMATE)
+    plan_fwd_y = fftw_plan_dft_1d(N_pad, signal_y, fft_y, FFTW_FORWARD, FFTW_ESTIMATE)
+    plan_bwd   = fftw_plan_dft_1d(N_pad, power_spectrum, result_complex, FFTW_BACKWARD, FFTW_ESTIMATE)
     
     ! FFT
     CALL fftw_execute_dft(plan_fwd_x, signal_x, fft_x)
@@ -78,7 +78,7 @@ CONTAINS
     ! IFFT
     CALL fftw_execute_dft(plan_bwd, power_spectrum, result_complex)
 
-    norm = 1.0_wp / (DBLE(N) * DBLE(N))
+    norm = 1.0_wp / (DBLE(N_pad) * DBLE(N))
 
     DO i = 1, N
        correlation(i) = REAL(result_complex(i), KIND=wp) * norm
