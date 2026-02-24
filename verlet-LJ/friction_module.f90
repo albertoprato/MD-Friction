@@ -32,8 +32,9 @@ MODULE friction_module
     REAL (KIND=wp), DIMENSION(:), ALLOCATABLE :: vec_i, vec_j
     REAL (KIND=wp), DIMENSION(:), ALLOCATABLE :: corr_result
     REAL (KIND=wp), DIMENSION(:,:), ALLOCATABLE :: final_results
-
-    INTEGER :: a, I_sol, J_sol, t_lag, step, idx
+    
+    INTEGER :: i_idx, j_idx
+    INTEGER :: a, b, I_sol, J_sol, t_lag, step, idx
     INTEGER(c_int) :: N_c
     REAL (KIND=wp) :: time_val
     REAL (KIND=wp) :: temp, kb    
@@ -46,18 +47,30 @@ MODULE friction_module
 
     ! Output Files
     OPEN(UNIT=30, FILE='friction_tensor.dat', status='replace')
-
+    
     WRITE(30, '(A)', ADVANCE='NO') "#    Time      "
     DO I_sol = 1, 4
-      WRITE(30, '(3(A,I1), A)', ADVANCE='NO') &
-             "  Sol ", I_sol, "_X    Sol", I_sol, "_Y    Sol", I_sol, "_Z "
+      DO a = 1, 3
+        ! Calculate the 1-12 index for the first dimension
+        i_idx = (I_sol - 1) * 3 + a
+        
+        DO J_sol = 1, 4
+          DO b = 1, 3
+            ! Calculate the 1-12 index for the second dimension
+            j_idx = (J_sol - 1) * 3 + b
+            
+            ! Write the pair (i,j) using I0 format to avoid extra spaces
+            WRITE(30, '(" (", I0, ",", I0, ") ")', ADVANCE='NO') i_idx, j_idx
+            
+          END DO
+        END DO
+      END DO
     END DO
-    WRITE(30, *) ""      
+    WRITE(30, *) ""
 
     ! Create an array to store the diagonal components      
-    ALLOCATE(final_results(n_steps, 12))
+    ALLOCATE(final_results(n_steps, 144))
   
-    J_sol = 1    
     idx = 0
 
     ! Loop on solute particle
@@ -94,7 +107,7 @@ MODULE friction_module
       time_val = t_lag * dt
       
       WRITE(30, '(F10.4, 2X)', ADVANCE='NO') time_val
-      DO idx = 1, 12
+      DO idx = 1, 144
         WRITE(30, '(ES14.6, 1X)', ADVANCE='NO') final_results(step, idx)
       END DO
       WRITE(30, *) ""
