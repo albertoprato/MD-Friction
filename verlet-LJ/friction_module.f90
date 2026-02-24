@@ -64,17 +64,27 @@ MODULE friction_module
     DO I_sol = 1, 4
       ! Loop on x,y,z
       DO a = 1, 3
-        idx = idx + 1       
-
         ! Extract component 'a' of the force on particle I
         vec_i = force_hist(I_sol, a, :)
 
-        ! Calculate autocorrelation
-        CALL compute_correlation_fft(N_c, vec_i, vec_i, corr_result)
+        ! Loop on solute particle
+        DO J_sol = 1, 4
+          ! Loop on x,y,z
+          DO b = 1, 3
+          
+            idx = idx + 1
+          
+            ! Extract component 'a' of the force on particle I
+            vec_j = force_hist(J_sol, b, :) 
+        
+            ! Calculate autocorrelation
+            CALL compute_correlation_fft(N_c, vec_i, vec_j, corr_result)
 
-        ! Save results
-        final_results(:, idx) = corr_result(:) / (temp * kb)
-    
+            ! Save results
+            final_results(:, idx) = corr_result(:) / (temp * kb)
+            
+          END DO
+        END DO
       END DO
     END DO
 

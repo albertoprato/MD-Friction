@@ -120,6 +120,12 @@ MODULE minimization_module
         CALL force_calculation(n_solv, pos_new, pos_solute, forces_solv, forces_solute_dummy, &
                                epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, epot_new)
       END DO
+      
+      IF (epot_new >= epot) THEN
+        PRINT *, "Line search failed to decrease energy. Minimization stopped at iteration: ", iter
+        converged = .TRUE.
+        EXIT
+      END IF
 
       ! Update positions and energy
       pos_solv = pos_new
