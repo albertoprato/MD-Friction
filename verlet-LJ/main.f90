@@ -144,7 +144,7 @@ PROGRAM main
                          epsilon_ss, sigma_ss, epsilon_int, sigma_int, box_L, e_pot)
 
   ! Coupling constant
-  tau_T = 1.0_wp  
+  tau_T = 2.0_wp  
 
   DO step = 1, 5000
     time_val = DBLE(step) * dt   
